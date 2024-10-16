@@ -36,20 +36,20 @@ int main() {
 
   f2c::decomp::TrapezoidalDecomp decomp;
   decomp.setSplitAngle(0.25 * M_PI);
-  F2CCells decomp_cell = decomp.decompose(cells);
+  F2CCells decomp_cell = decomp.decompose(no_hl_wo_decomp);
 
-  F2CCells no_hl_decomp = const_hl.generateHeadlands(decomp_cell, 3.0 * r_w);
-  F2CSwathsByCells swaths_decomp =
-      bf.generateBestSwaths(obj, r_w, no_hl_decomp);
+  F2CCells no_hl_decomp = const_hl.generateHeadlands(cells, 3.0 * r_w);
+  // F2CSwathsByCells swaths_decomp =
+  //     bf.generateBestSwaths(obj, r_w, no_hl_decomp);
   f2c::sg::BruteForce bf_sw_gen_nswath;
   F2CSwaths swaths_decomp = bf_sw_gen_nswath.generateSwaths(
-      M_PI * .25, robot.getCovWidth(), no_hl_decomp.getGeometry(0));
+      M_PI * .25, robot.getCovWidth(), decomp_cell.getGeometry(0));
   F2CSwaths swaths_decomp2 = bf_sw_gen_nswath.generateSwaths(
-      M_PI * .25, robot.getCovWidth(), no_hl_decomp.getGeometry(1));
+      M_PI * .25, robot.getCovWidth(), decomp_cell.getGeometry(1));
   F2CSwaths swaths_decomp3 = bf_sw_gen_nswath.generateSwaths(
-      M_PI * .25, robot.getCovWidth(), no_hl_decomp.getGeometry(2));
+      M_PI * .25, robot.getCovWidth(), decomp_cell.getGeometry(2));
   F2CSwaths swaths_decomp4 = bf_sw_gen_nswath.generateSwaths(
-      M_PI * .25, robot.getCovWidth(), no_hl_decomp.getGeometry(3));
+      M_PI * .25, robot.getCovWidth(), decomp_cell.getGeometry(3));
 
   std::cout << "With decomposition >> " << obj.computeCost(swaths_decomp)
             << std::endl;
@@ -63,7 +63,7 @@ int main() {
   f2c::Visualizer::save("Tutorial_7_1_without_decomposition.png");
 
   f2c::Visualizer::figure();
-  f2c::Visualizer::plot(decomp_cell);
+  f2c::Visualizer::plot(cells);
   f2c::Visualizer::plot(no_hl_decomp);
   f2c::Visualizer::plot(swaths_decomp);
   f2c::Visualizer::plot(swaths_decomp2);
