@@ -8,6 +8,9 @@ This server exposes a (partial) f2c REST API. The server is generated from the O
 
 1. Edit the `src/fields2cover-api/openapi_server/openapi/openapi.yaml` file to update the API definition
 2. regenerate the server code with the following command:
+2. wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/7.17.0/openapi-generator-cli-7.17.0.jar -O openapi-generator-cli.jar
+3. 
+
 
     ```bash
     java -jar openapi-generator-cli.jar generate -i openapi_server/openapi/openapi.yaml -g python-flask

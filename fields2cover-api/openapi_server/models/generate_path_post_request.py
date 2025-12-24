@@ -141,6 +141,8 @@ class GeneratePathPostRequest(Model):
         :param start_point: The start_point of this GeneratePathPostRequest.
         :type start_point: Point
         """
+        if start_point is None:
+            raise ValueError("Invalid value for `start_point`, must not be `None`")  # noqa: E501
 
         self._start_point = start_point
 
@@ -162,6 +164,8 @@ class GeneratePathPostRequest(Model):
         :param end_point: The end_point of this GeneratePathPostRequest.
         :type end_point: Point
         """
+        if end_point is None:
+            raise ValueError("Invalid value for `end_point`, must not be `None`")  # noqa: E501
 
         self._end_point = end_point
 

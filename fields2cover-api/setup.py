@@ -20,10 +20,10 @@ REQUIRES = [
 setup(
     name=NAME,
     version=VERSION,
-    description="Path Generation API",
+    description="Fields2Cover API",
     author_email="",
     url="",
-    keywords=["OpenAPI", "Path Generation API"],
+    keywords=["OpenAPI", "Fields2Cover API"],
     install_requires=REQUIRES,
     packages=find_packages(),
     package_data={'': ['openapi/openapi.yaml']},
@@ -31,7 +31,7 @@ setup(
     entry_points={
         'console_scripts': ['openapi_server=openapi_server.__main__:main']},
     long_description="""\
-    API to generate paths and routes based on field and working lanes data.
+    API for coverage path planning for agricultural robots. Based on Fields2Cover library - a complete coverage path planning library. 
     """
 )
 

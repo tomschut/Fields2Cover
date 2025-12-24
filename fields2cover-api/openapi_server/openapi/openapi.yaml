@@ -1,583 +1,878 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  description: API to generate paths and routes based on field and working lanes data.
-  title: Path Generation API
+  description: |
+    API for coverage path planning for agricultural robots.
+    Based on Fields2Cover library - a complete coverage path planning library.
+  license:
+    name: BSD-3-Clause
+    url: https://opensource.org/licenses/BSD-3-Clause
+  title: Fields2Cover API
   version: 1.0.0
 servers:
-- url: /
+  - description: Local development server
+    url: http://localhost:8080/api/v1
+tags:
+  - description: Field data import operations
+    name: Parser
+  - description: Field manipulation operations
+    name: Field
+  - description: Coordinate transformation operations
+    name: Transform
+  - description: Robot configuration
+    name: Robot
+  - description: Headland generation
+    name: Headland
+  - description: Swath generation
+    name: Swath
+  - description: Route planning and swath ordering
+    name: Route
+  - description: Path planning
+    name: Path
 paths:
-  /generatePath:
+  /field/clone:
     post:
-      operationId: generate_path_post
+      description: Create a deep copy of a field object
+      operationId: clone_field
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/_generatePath_post_request'
+              $ref: "#/components/schemas/Field"
         required: true
-        x-body-name: generate_path_post_request
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Path'
-          description: Path generated successfully
+                $ref: "#/components/schemas/Field"
+          description: Field successfully cloned
         "400":
-          description: Invalid input
-        "500":
-          description: Internal server error
-      summary: Generate a path based on field data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Clone a field
+      tags:
+        - Field
+      x-openapi-router-controller: openapi_server.controllers.field_controller
+  /headland/generate:
+    post:
+      description: Generate constant-width headland areas for a field
+      operationId: generate_headlands
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/generateHeadlands_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cells"
+          description: Headlands successfully generated
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Generate headlands
+      tags:
+        - Headland
+      x-openapi-router-controller: openapi_server.controllers.headland_controller
+  /parser/import-field-gml:
+    post:
+      description: Import field geometry from a GML/XML file
+      operationId: import_field_gml
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/importFieldGml_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Field"
+          description: Field successfully imported
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Resource not found
+      summary: Import field from GML file
+      tags:
+        - Parser
+      x-openapi-router-controller: openapi_server.controllers.parser_controller
+  /path/plan:
+    post:
+      description: Plan complete coverage path using specified turning algorithm
+      operationId: plan_path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/planPath_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Path"
+          description: Path successfully planned
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Plan coverage path
+      tags:
+        - Path
       x-openapi-router-controller: openapi_server.controllers.path_controller
-  /generateRoute:
+  /robot/create:
     post:
-      operationId: generate_route_post
+      description: Create a robot with specified width and coverage width
+      operationId: create_robot
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/_generateRoute_post_request'
+              $ref: "#/components/schemas/createRobot_request"
         required: true
-        x-body-name: generate_route_post_request
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/generate_route_post_200_response'
-          description: Route generated successfully
+                $ref: "#/components/schemas/Robot"
+          description: Robot successfully created
         "400":
-          description: Invalid input
-        "500":
-          description: Internal server error
-      summary: Generate a route based on field data
-      x-openapi-router-controller: openapi_server.controllers.route_controller
-  /generateShortestRoute:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Create robot configuration
+      tags:
+        - Robot
+      x-openapi-router-controller: openapi_server.controllers.robot_controller
+  /route/sort-swaths:
     post:
-      operationId: generate_shortest_route_post
+      description: Sort swaths using snake order pattern
+      operationId: sort_swaths
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/_generateShortestRoute_post_request'
+              $ref: "#/components/schemas/sortSwaths_request"
         required: true
-        x-body-name: generate_shortest_route_post_request
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/generate_route_post_200_response'
-          description: Shortest route generated successfully
+                $ref: "#/components/schemas/Swaths"
+          description: Swaths successfully sorted
         "400":
-          description: Invalid input
-        "500":
-          description: Internal server error
-      summary: Generate the shortest route based on field data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Sort swaths
+      tags:
+        - Route
       x-openapi-router-controller: openapi_server.controllers.route_controller
+  /swath/generate:
+    post:
+      description: Generate coverage swaths using brute force algorithm
+      operationId: generate_swaths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/generateSwaths_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Swaths"
+          description: Swaths successfully generated
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Generate swaths
+      tags:
+        - Swath
+      x-openapi-router-controller: openapi_server.controllers.swath_controller
+  /transform/to-previous-crs:
+    post:
+      description: Transform path back to the original coordinate reference system
+      operationId: transform_to_prev_crs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/transformToPrevCRS_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Path"
+          description: Path successfully transformed
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Transform to previous CRS
+      tags:
+        - Transform
+      x-openapi-router-controller: openapi_server.controllers.transform_controller
+  /transform/to-utm:
+    post:
+      description: Transform field from GPS/geographic coordinates to UTM projection
+      operationId: transform_to_utm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/transformToUTM_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Field"
+          description: Field successfully transformed to UTM
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Bad request - invalid input
+      summary: Transform field to UTM coordinates
+      tags:
+        - Transform
+      x-openapi-router-controller: openapi_server.controllers.transform_controller
 components:
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+      description: Bad request - invalid input
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+      description: Resource not found
   schemas:
-    Path:
+    Field:
       example:
-        poses:
-        - len: 0.0
-          angle: 0.0
-          point:
-            bbox:
-            - 0.8008281904610115
-            - 0.8008281904610115
-            coordinates: null
-            type: Point
-        - len: 0.0
-          angle: 0.0
-          point:
-            bbox:
-            - 0.8008281904610115
-            - 0.8008281904610115
-            coordinates: null
-            type: Point
+        area: 5.637376656633329
+        cells:
+          cells:
+            - area: 5.962133916683182
+              outerRing:
+                points:
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+              innerRings:
+                - points:
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+                - points:
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+            - area: 5.962133916683182
+              outerRing:
+                points:
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+              innerRings:
+                - points:
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+                - points:
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+                    - x: 0.8008281904610115
+                      "y": 6.027456183070403
+                      z: 1.4658129805029452
+        crs: crs
+        id: id
       properties:
-        poses:
-          items:
-            $ref: '#/components/schemas/Pose'
-          title: poses
-          type: array
-      required:
-      - poses
-      title: Path
-    Pose:
-      example:
-        len: 0.0
-        angle: 0.0
-        point:
-          bbox:
-          - 0.8008281904610115
-          - 0.8008281904610115
-          coordinates: null
-          type: Point
-      properties:
-        point:
-          $ref: '#/components/schemas/Point'
-        angle:
-          description: Angle of the path
-          example: 0.0
-          title: angle
-          type: number
-        len:
-          description: Length of the path (must be >= 0)
-          example: 0.0
-          minimum: 0
-          title: len
-          type: number
-      required:
-      - angle
-      - len
-      - point
-      title: Path
-      type: object
-    _generatePath_post_request_settings:
-      properties:
-        robotSettings:
-          $ref: '#/components/schemas/Robot_Settings'
-        sorterSettings:
-          $ref: '#/components/schemas/_generatePath_post_request_settings_sorterSettings'
-        curvesAlgorithm:
-          description: Algorithm to generate curves
-          enum:
-          - dubins
-          - dubins_cc
-          - reeds_shepp
-          example: dubins
-          title: curvesAlgorithm
+        id:
+          description: Field identifier
+          title: id
           type: string
-      title: _generatePath_post_request_settings
+        crs:
+          description:
+            "Coordinate reference system (e.g., \"EPSG:4258\", \"EPSG:28992\"\
+            )"
+          title: crs
+          type: string
+        cells:
+          $ref: "#/components/schemas/Cells"
+        area:
+          description: Field area in square meters
+          format: double
+          title: area
+          type: number
+      title: Field
       type: object
-    _generatePath_post_request:
+    Cells:
+      description: Collection of cell geometries
+      example:
+        cells:
+          - area: 5.962133916683182
+            outerRing:
+              points:
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+            innerRings:
+              - points:
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+              - points:
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+          - area: 5.962133916683182
+            outerRing:
+              points:
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+            innerRings:
+              - points:
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+              - points:
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
+                  - x: 0.8008281904610115
+                    "y": 6.027456183070403
+                    z: 1.4658129805029452
       properties:
-        workingLanes:
-          $ref: '#/components/schemas/FeatureCollection'
-        transportLanes:
-          $ref: '#/components/schemas/FeatureCollection'
-        startPoint:
-          $ref: '#/components/schemas/Point'
-        endPoint:
-          $ref: '#/components/schemas/Point'
-        robotSettings:
-          $ref: '#/components/schemas/_generatePath_post_request_settings/properties/robotSettings'
-        sorterSettings:
-          $ref: '#/components/schemas/_generatePath_post_request_settings/properties/sorterSettings'
-        curvesAlgorithm:
-          $ref: '#/components/schemas/_generatePath_post_request_settings/properties/curvesAlgorithm'
+        cells:
+          items:
+            $ref: "#/components/schemas/Cell"
+          title: cells
+          type: array
+      title: Cells
+      type: object
+    Cell:
+      description: Single cell polygon geometry
+      example:
+        area: 5.962133916683182
+        outerRing:
+          points:
+            - x: 0.8008281904610115
+              "y": 6.027456183070403
+              z: 1.4658129805029452
+            - x: 0.8008281904610115
+              "y": 6.027456183070403
+              z: 1.4658129805029452
+        innerRings:
+          - points:
+              - x: 0.8008281904610115
+                "y": 6.027456183070403
+                z: 1.4658129805029452
+              - x: 0.8008281904610115
+                "y": 6.027456183070403
+                z: 1.4658129805029452
+          - points:
+              - x: 0.8008281904610115
+                "y": 6.027456183070403
+                z: 1.4658129805029452
+              - x: 0.8008281904610115
+                "y": 6.027456183070403
+                z: 1.4658129805029452
+      properties:
+        outerRing:
+          $ref: "#/components/schemas/LinearRing"
+        innerRings:
+          items:
+            $ref: "#/components/schemas/LinearRing"
+          title: innerRings
+          type: array
+        area:
+          format: double
+          title: area
+          type: number
+      title: Cell
+      type: object
+    LinearRing:
+      example:
+        points:
+          - x: 0.8008281904610115
+            "y": 6.027456183070403
+            z: 1.4658129805029452
+          - x: 0.8008281904610115
+            "y": 6.027456183070403
+            z: 1.4658129805029452
+      properties:
+        points:
+          items:
+            $ref: "#/components/schemas/Point"
+          title: points
+          type: array
+      title: LinearRing
+      type: object
+    Point:
+      example:
+        x: 0.8008281904610115
+        "y": 6.027456183070403
+        z: 1.4658129805029452
+      properties:
+        x:
+          format: double
+          title: x
+          type: number
+        "y":
+          format: double
+          title: "y"
+          type: number
+        z:
+          default: 0.0
+          format: double
+          title: z
+          type: number
       required:
-      - curvesAlgorithm
-      - robotSettings
-      - sorterSettings
-      - startPoint
-      - endPoint
-      - transportLanes
-      - workingLanes
-      title: _generatePath_post_request
+        - x
+        - "y"
+      title: Point
       type: object
-    _generateRoute_post_request:
+    Robot:
+      example:
+        maxCurvature: 5.962133916683182
+        maxDiffCurvature: 5.637376656633329
+        coverageWidth: 6.027456183070403
+        minTurningRadius: 1.4658129805029452
+        robotWidth: 0.8008281904610115
+        cruiseVelocity: 2.3021358869347655
       properties:
-        workingLanes:
-          $ref: '#/components/schemas/FeatureCollection'
-        transportLanes:
-          $ref: '#/components/schemas/FeatureCollection'
-        startPoint:
-          $ref: '#/components/schemas/Point'
-        endPoint:
-          $ref: '#/components/schemas/Point'
-        sorterSettings:
-          $ref: '#/components/schemas/_generatePath_post_request_settings/properties/sorterSettings'
+        robotWidth:
+          description: Robot width in meters
+          format: double
+          title: robotWidth
+          type: number
+        coverageWidth:
+          description: Working/coverage width in meters
+          format: double
+          title: coverageWidth
+          type: number
+        minTurningRadius:
+          description: Minimum turning radius in meters
+          format: double
+          title: minTurningRadius
+          type: number
+        maxCurvature:
+          description: Maximum curvature (1/radius)
+          format: double
+          title: maxCurvature
+          type: number
+        maxDiffCurvature:
+          description: Maximum curvature change rate
+          format: double
+          title: maxDiffCurvature
+          type: number
+        cruiseVelocity:
+          description: Cruise velocity in m/s
+          format: double
+          title: cruiseVelocity
+          type: number
       required:
-      - sorterSettings
-      - startPoint
-      - endPoint
-      - transportLanes
-      - workingLanes
-      title: _generateRoute_post_request
+        - coverageWidth
+        - robotWidth
+      title: Robot
       type: object
-    _generateShortestRoute_post_request:
+    Swaths:
+      example:
+        swaths:
+          - path:
+              points:
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+            width: 0.8008281904610115
+            id: 6
+          - path:
+              points:
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+                - x: 0.8008281904610115
+                  "y": 6.027456183070403
+                  z: 1.4658129805029452
+            width: 0.8008281904610115
+            id: 6
       properties:
-        workingLanes:
-          $ref: '#/components/schemas/FeatureCollection'
-        transportLanes:
-          $ref: '#/components/schemas/FeatureCollection'
-        startPoint:
-          $ref: '#/components/schemas/Point'
-        endPoint:
-          $ref: '#/components/schemas/Point'
-      required:
-      - endPoint
-      - startPoint
-      - transportLanes
-      - workingLanes
-      title: _generateShortestRoute_post_request
+        swaths:
+          items:
+            $ref: "#/components/schemas/Swath"
+          title: swaths
+          type: array
+      title: Swaths
       type: object
-    Robot_Settings:
+    Swath:
+      example:
+        path:
+          points:
+            - x: 0.8008281904610115
+              "y": 6.027456183070403
+              z: 1.4658129805029452
+            - x: 0.8008281904610115
+              "y": 6.027456183070403
+              z: 1.4658129805029452
+        width: 0.8008281904610115
+        id: 6
       properties:
+        path:
+          $ref: "#/components/schemas/LineString"
         width:
-          description: Width of the robot
-          example: 2.0
+          format: double
           title: width
           type: number
-        cov_width:
-          description: Width of the headland
-          example: 3.0
-          title: cov_width
-          type: number
-        max_curv:
-          description: Maximum curvature
-          example: 0.5
-          title: max_curv
-          type: number
-        max_diff_curv:
-          description: Maximum difference in curvature
-          example: 0.2
-          title: max_diff_curv
-          type: number
-      title: Robot Settings
+        id:
+          title: id
+          type: integer
+      title: Swath
       type: object
-    _generatePath_post_request_settings_sorterSettings:
+    LineString:
+      example:
+        points:
+          - x: 0.8008281904610115
+            "y": 6.027456183070403
+            z: 1.4658129805029452
+          - x: 0.8008281904610115
+            "y": 6.027456183070403
+            z: 1.4658129805029452
       properties:
-        algorithm:
-          description: Algorithm to sort the swaths
+        points:
+          items:
+            $ref: "#/components/schemas/Point"
+          title: points
+          type: array
+      title: LineString
+      type: object
+    Path:
+      example:
+        length: 5.637376656633329
+        states:
+          - length: 1.4658129805029452
+            angle: 0.8008281904610115
+            velocity: 6.027456183070403
+            type: DRIVE
+            point:
+              x: 0.8008281904610115
+              "y": 6.027456183070403
+              z: 1.4658129805029452
+            curvature: 5.962133916683182
+          - length: 1.4658129805029452
+            angle: 0.8008281904610115
+            velocity: 6.027456183070403
+            type: DRIVE
+            point:
+              x: 0.8008281904610115
+              "y": 6.027456183070403
+              z: 1.4658129805029452
+            curvature: 5.962133916683182
+      properties:
+        states:
+          items:
+            $ref: "#/components/schemas/PathState"
+          title: states
+          type: array
+        length:
+          description: Total path length in meters
+          format: double
+          title: length
+          type: number
+      title: Path
+      type: object
+    PathState:
+      example:
+        length: 1.4658129805029452
+        angle: 0.8008281904610115
+        velocity: 6.027456183070403
+        type: DRIVE
+        point:
+          x: 0.8008281904610115
+          "y": 6.027456183070403
+          z: 1.4658129805029452
+        curvature: 5.962133916683182
+      properties:
+        point:
+          $ref: "#/components/schemas/Point"
+        angle:
+          description: Heading angle in radians
+          format: double
+          title: angle
+          type: number
+        velocity:
+          format: double
+          title: velocity
+          type: number
+        length:
+          description: Cumulative length to this point
+          format: double
+          title: length
+          type: number
+        type:
           enum:
-          - snake
-          - boustrophedon
-          - spiral
-          - optimal
-          example: snake
-          title: sorterAlgorithm
+            - DRIVE
+            - TURN
+            - SWATH
+          title: type
           type: string
-        variant:
-          default: 1
-          description: Variant of the sorter algorithm (1..4)
-          example: 1
-          title: sorterVariant
-          type: integer
-        spiralSize:
-          description: Size of the spiral
-          example: 10
-          title: spiralSize
-          type: integer
-      required:
-      - algorithm
-      title: _generatePath_post_request_settings_sorterSettings
-    GeoJsonObject:
-      description: |
-        GeoJSon object
-        The coordinate reference system for all GeoJSON coordinates is a geographic coordinate reference system, using the World Geodetic System 1984 (WGS 84) datum, with longitude and latitude units of decimal degrees. This is equivalent to the coordinate reference system identified by the Open Geospatial Consortium (OGC) URN An OPTIONAL third-position element SHALL be the height in meters above or below the WGS 84 reference ellipsoid. In the absence of elevation values, applications sensitive to height or depth SHOULD interpret positions as being at local ground or sea level.
-      discriminator:
-        propertyName: type
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3
+        curvature:
+          format: double
+          title: curvature
+          type: number
+      title: PathState
+      type: object
+    VisualizationLayer:
       properties:
         type:
           enum:
-          - Feature
-          - FeatureCollection
-          - Point
-          - MultiPoint
-          - LineString
-          - MultiLineString
-          - Polygon
-          - MultiPolygon
-          - GeometryCollection
+            - FIELD
+            - CELLS
+            - PATH
+            - SWATHS
+            - ROUTE
           title: type
           type: string
-        bbox:
-          description: |
-            A GeoJSON object MAY have a member named "bbox" to include information on the coordinate range for its Geometries, Features, or FeatureCollections. The value of the bbox member MUST be an array of length 2*n where n is the number of dimensions represented in the contained geometries, with all axes of the most southwesterly point followed by all axes of the more northeasterly point. The axes order of a bbox follows the axes order of geometries.
-          items:
-            type: number
-          title: bbox
-          type: array
+        data:
+          description: Geometry data to visualize
+          title: data
+          type: object
       required:
-      - type
-      title: GeoJsonObject
+        - data
+        - type
+      title: VisualizationLayer
       type: object
-    Geometry:
-      allOf:
-      - $ref: '#/components/schemas/GeoJsonObject'
-      - discriminator:
-          propertyName: type
-        properties:
-          coordinates:
-            $ref: '#/components/schemas/Geometry_allOf_coordinates'
-          type:
-            enum:
-            - Point
-            - MultiPoint
-            - LineString
-            - MultiLineString
-            - Polygon
-            - MultiPolygon
-            - GeometryCollection
-            type: string
-        required:
-        - type
-        type: object
-      description: |
-        Abstract type for all GeoJSon object except Feature and FeatureCollection
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3
-      title: Geometry
-    GeometryElement:
-      allOf:
-      - $ref: '#/components/schemas/Geometry'
-      - discriminator:
-          propertyName: type
-        properties:
-          type:
-            enum:
-            - Point
-            - MultiPoint
-            - LineString
-            - MultiLineString
-            - Polygon
-            - MultiPolygon
-            type: string
-        required:
-        - type
-        type: object
-      description: |
-        Abstract type for all GeoJSon 'Geometry' object the type of which is not 'GeometryCollection'
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3
-      title: GeometryElement
-    Feature:
-      allOf:
-      - $ref: '#/components/schemas/GeoJsonObject'
-      - properties:
-          geometry:
-            $ref: '#/components/schemas/Feature_allOf_geometry'
-          properties:
-            $ref: '#/components/schemas/Feature_allOf_properties'
-          id:
-            $ref: '#/components/schemas/Feature_allOf_id'
-        required:
-        - geometry
-        - properties
-        type: object
-      description: GeoJSon 'Feature' object
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.2
-      title: Feature
-    FeatureCollection:
-      allOf:
-      - $ref: '#/components/schemas/GeoJsonObject'
-      - properties:
-          features:
-            items:
-              $ref: '#/components/schemas/Feature'
-            type: array
-        required:
-        - features
-        type: object
-      description: GeoJSon 'FeatureCollection' object
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.3
-      title: FeatureCollection
-    Position:
-      description: |
-        GeoJSon fundamental geometry construct.
-        A position is an array of numbers. There MUST be two or more elements. The first two elements are longitude and latitude, or easting and northing, precisely in that order and using decimal numbers. Altitude or elevation MAY be included as an optional third element.
-        Implementations SHOULD NOT extend positions beyond three elements because the semantics of extra elements are unspecified and ambiguous. Historically, some implementations have used a fourth element to carry a linear referencing measure (sometimes denoted as "M") or a numerical timestamp, but in most situations a parser will not be able to properly interpret these values. The interpretation and meaning of additional elements is beyond the scope of this specification, and additional elements MAY be ignored by parsers.
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.1
-      items:
-        type: number
-      maxItems: 3
-      minItems: 2
-      title: Position
-      type: array
-    LineStringCoordinates:
-      description: |
-        GeoJSon fundamental geometry construct, array of two or more positions.
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.4
-      items:
-        $ref: '#/components/schemas/Position'
-      minItems: 2
-      title: LineStringCoordinates
-      type: array
-    LinearRing:
-      description: |
-        A linear ring is a closed LineString with four or more positions.
-        The first and last positions are equivalent, and they MUST contain identical values; their representation SHOULD also be identical.
-        A linear ring is the boundary of a surface or the boundary of a hole in a surface.
-        A linear ring MUST follow the right-hand rule with respect to the area it bounds, i.e., exterior rings are counterclockwise, and holes are clockwise.
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.6
-      items:
-        $ref: '#/components/schemas/Position'
-      minItems: 4
-      title: LinearRing
-      type: array
-    Point:
-      allOf:
-      - $ref: '#/components/schemas/GeometryElement'
-      - properties:
-          type:
-            enum:
-            - Point
-            type: string
-          coordinates:
-            $ref: '#/components/schemas/Position'
-        required:
-        - coordinates
-        - type
-        type: object
-      description: GeoJSon geometry
+    Error:
       example:
-        bbox:
-        - 0.8008281904610115
-        - 0.8008281904610115
-        coordinates: null
-        type: Point
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.2
-      title: Point
-    MultiPoint:
-      allOf:
-      - $ref: '#/components/schemas/GeometryElement'
-      - properties:
-          coordinates:
-            items:
-              $ref: '#/components/schemas/Position'
-            type: array
-        required:
-        - coordinates
-        type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.3
-    LineString:
-      allOf:
-      - $ref: '#/components/schemas/GeometryElement'
-      - properties:
-          coordinates:
-            $ref: '#/components/schemas/LineStringCoordinates'
-        required:
-        - coordinates
-        type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.4
-      title: LineString
-    MultiLineString:
-      allOf:
-      - $ref: '#/components/schemas/GeometryElement'
-      - properties:
-          coordinates:
-            items:
-              $ref: '#/components/schemas/LineStringCoordinates'
-            type: array
-        required:
-        - coordinates
-        type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.5
-    Polygon:
-      allOf:
-      - $ref: '#/components/schemas/GeometryElement'
-      - properties:
-          coordinates:
-            items:
-              $ref: '#/components/schemas/LinearRing'
-            type: array
-        required:
-        - coordinates
-        type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.6
-    MultiPolygon:
-      allOf:
-      - $ref: '#/components/schemas/GeometryElement'
-      - properties:
-          coordinates:
-            items:
-              items:
-                $ref: '#/components/schemas/LinearRing'
-              type: array
-            type: array
-        required:
-        - coordinates
-        type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.7
-    GeometryCollection:
-      allOf:
-      - $ref: '#/components/schemas/Geometry'
-      - properties:
-          geometries:
-            items:
-              $ref: '#/components/schemas/GeometryElement'
-            minItems: 0
-            type: array
-        required:
-        - geometries
-        type: object
-      description: |
-        GeoJSon geometry collection
-        GeometryCollections composed of a single part or a number of parts of a single type SHOULD be avoided when that single part or a single object of multipart type (MultiPoint, MultiLineString, or MultiPolygon) could be used instead.
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.1.8
-      type: object
-    generate_route_post_200_response:
-      allOf:
-      - $ref: '#/components/schemas/LineString'
-      - properties:
-          type:
-            enum:
-            - LineString
-            type: string
-        type: object
-      example:
-        bbox:
-        - 0.8008281904610115
-        - 0.8008281904610115
-        coordinates:
-        - null
-        - null
-        type: LineString
+        code: code
+        details: details
+        message: message
+      properties:
+        code:
+          title: code
+          type: string
+        message:
+          title: message
+          type: string
+        details:
+          title: details
+          type: string
       required:
-      - coordinates
-      - type
-      title: generate_route_post_200_response
-    Geometry_allOf_coordinates_oneOf_inner:
-      oneOf:
-      - $ref: '#/components/schemas/Position'
-      - $ref: '#/components/schemas/LineStringCoordinates'
-      - $ref: '#/components/schemas/LinearRing'
-      title: Geometry_allOf_coordinates_oneOf_inner
-    Geometry_allOf_coordinates:
-      oneOf:
-      - $ref: '#/components/schemas/Position'
-      - items:
-          $ref: '#/components/schemas/Geometry_allOf_coordinates_oneOf_inner'
-        type: array
-      - items:
-          items:
-            $ref: '#/components/schemas/LinearRing'
-          type: array
-        type: array
-      title: Geometry_allOf_coordinates
-    Feature_allOf_geometry:
-      allOf:
-      - nullable: true
-      - $ref: '#/components/schemas/Geometry'
-      title: Feature_allOf_geometry
-    Feature_allOf_properties:
-      nullable: true
+        - code
+        - message
+      title: Error
       type: object
-    Feature_allOf_id:
-      oneOf:
-      - type: number
-      - type: string
-      title: Feature_allOf_id
+    importFieldGml_request:
+      properties:
+        filePath:
+          description: Path to the GML/XML file
+          example: data/test1.xml
+          title: filePath
+          type: string
+      required:
+        - filePath
+      title: importFieldGml_request
+      type: object
+    transformToUTM_request:
+      properties:
+        field:
+          $ref: "#/components/schemas/Field"
+        isETRS89:
+          default: true
+          description: Use ETRS89 datum (default true)
+          title: isETRS89
+          type: boolean
+      required:
+        - field
+      title: transformToUTM_request
+      type: object
+    createRobot_request:
+      properties:
+        robotWidth:
+          description: Robot width in meters
+          example: 2.0
+          format: double
+          title: robotWidth
+          type: number
+        coverageWidth:
+          description: Coverage/working width in meters
+          example: 6.0
+          format: double
+          title: coverageWidth
+          type: number
+        minTurningRadius:
+          description: Minimum turning radius in meters
+          example: 2.0
+          format: double
+          title: minTurningRadius
+          type: number
+      required:
+        - coverageWidth
+        - robotWidth
+      title: createRobot_request
+      type: object
+    generateHeadlands_request:
+      properties:
+        cells:
+          $ref: "#/components/schemas/Cells"
+        width:
+          description: Headland width (typically 3.0 * robot width)
+          example: 18.0
+          format: double
+          title: width
+          type: number
+      required:
+        - cells
+        - width
+      title: generateHeadlands_request
+      type: object
+    generateSwaths_request:
+      properties:
+        angle:
+          description: Swath angle in radians
+          example: 3.14159
+          format: double
+          title: angle
+          type: number
+        width:
+          description: Coverage width in meters
+          example: 6.0
+          format: double
+          title: width
+          type: number
+        cells:
+          $ref: "#/components/schemas/Cells"
+      required:
+        - angle
+        - cells
+        - width
+      title: generateSwaths_request
+      type: object
+    sortSwaths_request:
+      properties:
+        swaths:
+          $ref: "#/components/schemas/Swaths"
+        variant:
+          default: 0
+          description: Sorting variant (0-3 for different start positions)
+          maximum: 3
+          minimum: 0
+          title: variant
+          type: integer
+      required:
+        - swaths
+      title: sortSwaths_request
+      type: object
+    planPath_request:
+      properties:
+        robot:
+          $ref: "#/components/schemas/Robot"
+        swaths:
+          $ref: "#/components/schemas/Swaths"
+        turningAlgorithm:
+          description: Path planning algorithm for turns
+          enum:
+            - DUBINS
+            - DUBINS_CC
+            - REEDS_SHEPP
+            - REEDS_SHEPP_HC
+          example: DUBINS
+          title: turningAlgorithm
+          type: string
+      required:
+        - robot
+        - swaths
+        - turningAlgorithm
+      title: planPath_request
+      type: object
+    transformToPrevCRS_request:
+      properties:
+        path:
+          $ref: "#/components/schemas/Path"
+        field:
+          $ref: "#/components/schemas/Field"
+      required:
+        - field
+        - path
+      title: transformToPrevCRS_request
+      type: object

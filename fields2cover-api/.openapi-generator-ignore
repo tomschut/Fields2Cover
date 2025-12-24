@@ -23,8 +23,8 @@
 #!docs/README.md
 
 # for now, the generator does only write to default_controller.py but in a future version it might write to other files
-openapi_server/controllers/path_controller.py
-openapi_server/controllers/route_controller.py
+# openapi_server/controllers/path_controller.py
+# openapi_server/controllers/route_controller.py
 README.md
 .travis.yml
 git_push.sh
