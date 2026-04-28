@@ -5,7 +5,7 @@ milestone_name: Multi-Robot Planning
 status: planning
 last_updated: "2026-04-29T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -34,20 +34,30 @@ Items acknowledged and deferred at milestone close on 2026-04-29:
 See: .planning/PROJECT.md (updated 2026-04-29 after v3.0 milestone)
 
 **Core value:** Every API call either produces a directly-usable result or produces a typed handoff that the next call in the journey accepts without adaptation.
-**Current focus:** Planning next milestone
+**Current focus:** v4.0 Multi-Robot Planning — Phase 24 (C++ Multi-Robot Partitioning)
 
 ## Current Position
 
-Phase: --phase (22) — EXECUTING
-Plan: 1 of --name
-All 5 phases complete. Milestone v3.0 shipped.
+Milestone: v4.0 Multi-Robot Planning
+Phase: 24 — NOT STARTED
+Plan: -
 
 ```
-[████████████████████████████████████████] 100%
-Phase 21 of 21 — DONE
+[                                        ] 0%
+Phase 24 of 28 — PLANNING
 ```
 
-## Phase Status (v3.0)
+## Phase Status (v4.0)
+
+| Phase | Name | Status | Notes |
+|-------|------|--------|-------|
+| 24 | C++ Multi-Robot Partitioning | Not started | - |
+| 25 | C++ Grain Cart Coordination | Not started | - |
+| 26 | gRPC RPCs + Go API Endpoints | Not started | - |
+| 27 | Multi-Robot Frontend | Not started | - |
+| 28 | Grain Cart Frontend | Not started | - |
+
+## Phase Status (v3.0 — complete)
 
 | Phase | Name | Status | Notes |
 |-------|------|--------|-------|
@@ -56,6 +66,8 @@ Phase 21 of 21 — DONE
 | 19 | Pipeline Integration | Complete | 2026-04-16 |
 | 20 | Docs Pages | Complete | 2026-04-19 |
 | 21 | PDOK Gewaspercelen Import | Complete | 2026-04-20 |
+| 22 | Start/End Point Selection | Complete | 2026-04-28 |
+| 23 | Start-Point Native Backend | Complete | 2026-04-28 |
 
 ## Phase Status (v2.0 — complete)
 
@@ -69,6 +81,13 @@ Phase 21 of 21 — DONE
 | 14 | wodan Client Integration | DONE | Migrated to v2 /pipeline/plan-coverage, 30/30 jest tests |
 | 15 | farmmaps Client Integration | DONE | Fields2CoverService.planCoverage() migrated, ng build clean |
 | 16 | Python API Retirement | DONE | fields2cover-api/ deleted, legacy Dockerfile replaced |
+
+## Key Architecture Decisions (v4.0)
+
+- **New C++ algorithms** go in `include/` + `src/fields2cover/` — not wrappers around existing f2c APIs
+- **Proto contract:** `proto/f2c.proto` → generates Go client (`api-go/internal/f2cclient/`) and C++ server (`f2c-grpc/`)
+- **Go API:** `api-go/openapi.yaml` → `oapi-codegen` → typed handlers; frontend uses `npm run generate` for TypeScript types
+- **Frontend generated types:** Always run `npm run generate` in `frontend/` after OpenAPI changes — never hand-write API types
 
 ## Key Architecture Decisions (v3.0)
 
@@ -89,12 +108,9 @@ Phase 21 of 21 — DONE
 3. PDOK returns EPSG:28992 by default — always append `?crs=...CRS84` query param
 4. `go:embed` requires non-empty target dir at compile time — commit placeholder files
 5. SPA `r.NotFound(serveIndex)` poisons API 404s — use `statusRecorder` + `r.Get("/*", spaHandler)` after `api.HandlerFromMux`
+6. Frontend API types must always be generated (`npm run generate`) — never hand-written
 
-## Roadmap Evolution
-
-- Phase 22 added: Start/end point selection for coverage plan
-
-## Accumulated Context (from v2.0)
+## Accumulated Context (from v3.0)
 
 - f2c C++ core stable, ASan-clean
 - Go API on port 8080, chi router, `api.HandlerFromMux` entry point
@@ -106,16 +122,14 @@ Phase 21 of 21 — DONE
 
 1. `/clear` (if continuing in same session)
 2. `/gsd-resume-work` — loads this STATE.md and routes to next action
-3. Or run directly: `/gsd-plan-phase 17`
+3. Or run directly: `/gsd-plan-phase 24`
 
 ## Session Continuity
 
-Last session: 2026-04-20T22:21:47.636Z
-Stopped at: context exhaustion at 91% (2026-04-20)
+Last session: 2026-04-29T00:00:00.000Z
+Stopped at: roadmap created for v4.0
 Resume file: None
 
 ## Next Step
 
-`/gsd-plan-phase 17` to begin Infrastructure Foundation.
-
-**Planned Phase:** 22 (Start/end point selection for coverage plan) — 2 plans — 2026-04-20T15:33:55.120Z
+`/gsd-plan-phase 24` to begin C++ Multi-Robot Partitioning.

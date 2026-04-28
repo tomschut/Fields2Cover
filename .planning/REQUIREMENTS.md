@@ -67,21 +67,21 @@ Requirements for the Multi-Robot Planning milestone. Phases continue from 23.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| F2C-01 | TBD | Pending |
-| F2C-02 | TBD | Pending |
-| MRD-01 | TBD | Pending |
-| MRD-02 | TBD | Pending |
-| MRD-03 | TBD | Pending |
-| MRD-04 | TBD | Pending |
-| MRD-05 | TBD | Pending |
-| GC-01 | TBD | Pending |
-| GC-02 | TBD | Pending |
-| GC-03 | TBD | Pending |
-| GC-04 | TBD | Pending |
-| API-01 | TBD | Pending |
-| API-02 | TBD | Pending |
-| API-03 | TBD | Pending |
-| API-04 | TBD | Pending |
+| F2C-01 | Phase 24 | Pending |
+| F2C-02 | Phase 25 | Pending |
+| MRD-01 | Phase 27 | Pending |
+| MRD-02 | Phase 27 | Pending |
+| MRD-03 | Phase 27 | Pending |
+| MRD-04 | Phase 27 | Pending |
+| MRD-05 | Phase 27 | Pending |
+| GC-01 | Phase 28 | Pending |
+| GC-02 | Phase 28 | Pending |
+| GC-03 | Phase 28 | Pending |
+| GC-04 | Phase 28 | Pending |
+| API-01 | Phase 26 | Pending |
+| API-02 | Phase 26 | Pending |
+| API-03 | Phase 26 | Pending |
+| API-04 | Phase 26 | Pending |
 
 ---
 *Requirements defined: 2026-04-29*
