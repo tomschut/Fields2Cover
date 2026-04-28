@@ -9,7 +9,6 @@
 #define FIELDS2COVER_TYPES_FIELD_H_
 
 #include <string>
-#include <memory>
 #include "fields2cover/types/Point.h"
 #include "fields2cover/types/Cells.h"
 

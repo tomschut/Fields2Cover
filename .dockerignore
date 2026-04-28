@@ -1,0 +1,44 @@
+# Keep the build context lean. Anything not strictly needed by the
+# Dockerfile's COPY directives belongs here.
+
+.git
+.gitignore
+.gitattributes
+
+# Local builds and CI artifacts
+build/
+build-*/
+out/
+dist/
+api-go/bin/
+api-go/test/integration/testdata/*.bak
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# GSD planning + worktrees — none of this ships in the image
+.planning/
+.claude/
+
+# Docs not consumed by the build
+docs/
+tutorials/
+*.md
+!README.md
+!README.rst
+fields2cover-api/
+
+# Node modules from any sibling tooling that might land here
+node_modules/
+
+# Python crud (the python api is being deleted in this same change,
+# but ignore it now so build context stays clean while the deletion
+# commit lands in sequence)
+*.pyc
+__pycache__/
+.pytest_cache/
+.tox/
+*.egg-info/

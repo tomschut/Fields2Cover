@@ -30,13 +30,20 @@ class RoutePlannerBase {
   /// @param swaths_by_cells Swaths to be covered.
   /// @param show_log Show log from the optimizer
   /// @param d_tol Tolerance distance to consider if two points are the same.
+  /// @param redirect_swaths Whether to allow redirecting swaths
+  /// @param time_limit_seconds Maximum time to spend on optimization
+  /// @param search_for_optimum If true, uses guided local search which may take longer
+  ///        but can find more optimal solutions. If false, uses automatic search which is faster
+  ///        but may find less optimal solutions.
   /// @return Route that covers all the swaths
   virtual F2CRoute genRoute(
       const F2CCells& cells, const F2CSwathsByCells& swaths_by_cells,
-      bool show_log = false, double d_tol = 1e-4, bool redirect_swaths = true);
+      bool show_log = false, double d_tol = 1e-4, bool redirect_swaths = true,
+      long int time_limit_seconds = 1, bool search_for_optimum = false);
 
   /// Set the start and the end of the route.
   void setStartAndEndPoint(const F2CPoint& p);
+  void setStartAndEndPoint(const F2CPoint& start, const F2CPoint& end);
 
   /// Create graph to compute the shortest path between two points
   ///   in the headlands.
@@ -44,9 +51,8 @@ class RoutePlannerBase {
   /// @param cells Headland swath rings used to travel through the headlands
   /// @param swaths_by_cells Swaths to be covered.
   /// @param d_tol Tolerance distance to consider if two points are the same.
-  virtual F2CGraph2D createShortestGraph(
-      const F2CCells& cells, const F2CSwathsByCells& swaths_by_cells,
-      double d_tol) const;
+  virtual F2CGraph2D createShortestGraph(const F2CCells& cells,
+      const F2CSwathsByCells& swaths_by_cells, double d_tol) const;
 
   /// Create graph to compute the cost of covering the swaths in a given order.
   ///
@@ -55,34 +61,41 @@ class RoutePlannerBase {
   /// @param shortest_graph Graph to compute the shortest path
   ///          between two nodes.
   /// @param d_tol Tolerance distance to consider if two points are the same.
-  virtual F2CGraph2D createCoverageGraph(
-      const F2CCells& cells, const F2CSwathsByCells& swaths_by_cells,
-      F2CGraph2D& shortest_graph,
+  virtual F2CGraph2D createCoverageGraph(const F2CCells& cells,
+      const F2CSwathsByCells& swaths_by_cells, F2CGraph2D& shortest_graph,
       double d_tol, bool redirect_swaths = true) const;
 
-
+  /// Generate the shortest path between two points in cells.
+  virtual F2CRoute genShortestRoute(const F2CCells& cells,
+      const F2CSwathsByCells& swaths_by_cells, const F2CPoint& start,
+      const F2CPoint& end, double d_tol = 1e-4, bool use_swaths = false,
+      int swath_travel_cost = 10000);
   virtual ~RoutePlannerBase() = default;
 
- protected:
   /// Use the optimizer to generate the index of the points of the best
   ///   coverage route.
-  virtual std::vector<int64_t> computeBestRoute(
-      const F2CGraph2D& cov_graph, bool show_log) const;
+  /// @param cov_graph Graph representing the coverage problem
+  /// @param show_log Whether to show optimization logs
+  /// @param time_limit_seconds Maximum time to spend on optimization
+  /// @param use_guided_local_search If true, uses guided local search which may take longer
+  ///        but can find more optimal solutions. If false, uses automatic search which is faster
+  ///        but may find less optimal solutions.
+  virtual std::vector<long long int> computeBestRoute(
+      const F2CGraph2D& cov_graph, bool show_log, long int time_limit_seconds,
+      bool use_guided_local_search = true) const;
 
   /// Tranform index of points to an actual Route.
   virtual F2CRoute transformSolutionToRoute(
-      const std::vector<int64_t>& route_ids,
+      const std::vector<long long int>& route_ids,
       const F2CSwathsByCells& swaths_by_cells,
       const F2CGraph2D& coverage_graph,
       F2CGraph2D& shortest_graph) const;
 
  protected:
-  std::optional<F2CPoint> r_start_end;
+  std::optional<F2CPoint> r_start;
+  std::optional<F2CPoint> r_end;
 };
-
-
 
 }  // namespace f2c::rp
 
 #endif  // FIELDS2COVER_ROUTE_PLANNING_ROUTE_PLANNING_BASE_H_
-

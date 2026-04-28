@@ -24,7 +24,7 @@ class Random {
  public:
   /// Constructor to initialize the seed to a known value to make experiments
   /// reproducible
-  explicit Random(uint32_t seed = static_cast<uint32_t>(time(NULL)));
+  explicit Random(uint32_t seed = static_cast<uint32_t>(time(nullptr)));
 
   /// @cond DOXYGEN_SHOULD_SKIP_THIS
   ~Random();

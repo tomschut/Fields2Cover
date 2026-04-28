@@ -8,7 +8,6 @@
 #ifndef FIELDS2COVER_OBJECTIVES_HG_OBJECTIVE_H_
 #define FIELDS2COVER_OBJECTIVES_HG_OBJECTIVE_H_
 
-#include <vector>
 #include "fields2cover/types.h"
 #include "fields2cover/objectives/base_objective.h"
 

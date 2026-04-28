@@ -32,6 +32,8 @@ CMakeCache.txt
 .settings/
 .idea/
 build/
+build-asan/
+build-baseline/
 .vscode/
 *.pc
 .clangd/
@@ -49,3 +51,13 @@ cmake_install.cmake
 [._]s[a-rt-v][a-z]
 [._]ss[a-gi-z]
 [._]sw[a-p]
+
+
+__pycache__/
+*copy*
+*.png
+
+test__*
+
+frontend/node_modules/
+frontend/dist/

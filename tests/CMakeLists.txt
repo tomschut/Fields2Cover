@@ -8,6 +8,12 @@ file(
   GLOB_RECURSE TEST_SOURCES
   LIST_DIRECTORIES false unittests.cpp cpp/*/*.cpp cpp/*/*/*.cpp
 )
+# Exclude benchmark sources — they have their own main() and executable.
+list(FILTER TEST_SOURCES EXCLUDE REGEX "cpp/route_planning/benchmarks/")
+list(FILTER TEST_SOURCES EXCLUDE REGEX "cpp/benchmarks/")
+# Exclude libFuzzer harnesses — they have their own LLVMFuzzerTestOneInput
+# and require -fsanitize=fuzzer linkage handled in tests/cpp/fuzz/CMakeLists.txt.
+list(FILTER TEST_SOURCES EXCLUDE REGEX "cpp/fuzz/")
 
 add_executable(unittests ${TEST_SOURCES})
 
@@ -26,7 +32,7 @@ target_link_libraries(
   unittests
   PUBLIC
     Fields2Cover
-    gtest
+    GTest::gtest GTest::gtest_main
 )
 
 add_test(
@@ -53,3 +59,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
       ${PROJECT_SOURCE_DIR}/build
   )
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+# Route planner benchmarks (Phase 5 SLV-01)
+add_subdirectory(cpp/route_planning/benchmarks)
+
+# Phase 7 PRF-01 perf benchmarks (Plan 07-07): swath, headland, path interp
+add_subdirectory(cpp/benchmarks)

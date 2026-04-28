@@ -4,7 +4,6 @@
 //                        BSD-3 License
 //=============================================================================
 
-#include <utility>
 #include "fields2cover/headland_generator/constant_headland.h"
 
 namespace f2c::hg {

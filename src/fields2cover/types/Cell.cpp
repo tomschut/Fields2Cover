@@ -37,9 +37,11 @@ void Cell::getGeometry(size_t i, LinearRing& ring) {
     throw std::out_of_range(
         "Geometry does not contain point " + std::to_string(i));
   }
-  ring = LinearRing(((i == 0) ?
-    this->data_->getExteriorRing() :
-    this->data_->getInteriorRing(i-1)), EmptyDestructor());
+  // T-002: deep-copy via cloning ctor so `ring` owns its data. Previously
+  // an EmptyDestructor view dangled if the parent Cell was destroyed first.
+  ring = (i == 0) ?
+    LinearRing(this->data_->getExteriorRing()) :
+    LinearRing(this->data_->getInteriorRing(i-1));
 }
 
 void Cell::getGeometry(size_t i, LinearRing& ring) const {
@@ -47,10 +49,10 @@ void Cell::getGeometry(size_t i, LinearRing& ring) const {
     throw std::out_of_range(
         "Geometry does not contain point " + std::to_string(i));
   }
-
-  ring = LinearRing(((i == 0) ?
-    this->data_->getExteriorRing() :
-    this->data_->getInteriorRing(i-1)), EmptyDestructor());
+  // T-002: see non-const overload above.
+  ring = (i == 0) ?
+    LinearRing(this->data_->getExteriorRing()) :
+    LinearRing(this->data_->getInteriorRing(i-1));
 }
 
 LinearRing Cell::getGeometry(size_t i) {

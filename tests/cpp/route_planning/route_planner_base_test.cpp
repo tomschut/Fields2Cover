@@ -117,6 +117,37 @@ TEST(fields2cover_rp_route_plan_base, redirect_flag) {
   */
 }
 
+TEST(fields2cover_rp_route_plan_base, start_and_end_points) {
+  // Regression test for the PR #177 crash: start/end point coincident with a
+  // swath endpoint on the border. See .planning/research/route-planner-crash.md.
+  // Without the fix in route_planner_base.cpp this test segfaults or throws;
+  // with the fix it returns a non-empty route.
+  F2CCells cells {
+    F2CCell(F2CLinearRing({
+          F2CPoint(0, 0), F2CPoint(10, 0),
+          F2CPoint(10, 10), F2CPoint(0, 10), F2CPoint(0, 0)
+    }))
+  };
 
+  // Three horizontal swaths whose endpoints sit on the left/right border.
+  F2CSwaths swaths;
+  swaths.emplace_back(F2CLineString({F2CPoint(0, 2), F2CPoint(10, 2)}), 2.0);
+  swaths.emplace_back(F2CLineString({F2CPoint(0, 5), F2CPoint(10, 5)}), 2.0);
+  swaths.emplace_back(F2CLineString({F2CPoint(0, 8), F2CPoint(10, 8)}), 2.0);
 
+  F2CSwathsByCells sbc;
+  sbc.emplace_back(swaths);
 
+  // Start/end points EXACTLY equal to swath endpoints on the border.
+  F2CPoint start_pt = swaths.at(0).startPoint();  // (0, 2)
+  F2CPoint end_pt   = swaths.at(2).endPoint();    // (10, 8)
+
+  f2c::rp::RoutePlannerBase route_planner;
+  route_planner.setStartAndEndPoint(start_pt, end_pt);
+
+  F2CRoute route;
+  ASSERT_NO_THROW({
+    route = route_planner.genRoute(cells, sbc);
+  });
+  EXPECT_FALSE(route.isEmpty());
+}

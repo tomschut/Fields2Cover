@@ -10,9 +10,7 @@
 
 #include <gdal/ogr_spatialref.h>
 #include <memory>
-#include <utility>
 #include <string>
-#include <algorithm>
 #include "fields2cover/types.h"
 
 namespace f2c {

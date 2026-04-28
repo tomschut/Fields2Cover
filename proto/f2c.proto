@@ -1,0 +1,303 @@
+// Copyright (C) 2026 Wageningen University — BSD-3-Clause
+//
+// Internal gRPC contract between the Go API server and the f2c C++ shim.
+// This file is the single source of truth for what f2c operations the Go API
+// can invoke. The C++ server (phase 10) and Go client (phase 11) are both
+// generated from this file.
+//
+// IMPORTANT: This contract is DISJOINT from api-go/openapi.yaml on purpose.
+// The Go handler layer explicitly converts between OpenAPI (inline GeoJSON)
+// and these proto messages (WKT bytes). See docs/contracts.md.
+
+syntax = "proto3";
+
+package f2c.v1;
+
+option go_package = "github.com/Fields2Cover/fields2cover/proto/f2c/v1;f2cv1";
+option cc_enable_arenas = true;
+
+// =====================================================================
+// Service
+// =====================================================================
+
+// F2C exposes the fields2cover C++ operations that the Go API needs.
+// Exactly 9 RPCs — one per f2c operation on the journey surface.
+service F2C {
+  // Parse an inline GeoJSON FeatureCollection into a typed Field.
+  rpc ParseGeoJSON(ParseGeoJSONRequest) returns (ParseGeoJSONResponse);
+
+  // Project a Field from one CRS to a local UTM zone.
+  rpc TransformToUTM(TransformToUTMRequest) returns (TransformToUTMResponse);
+
+  // Deep-copy a Field (used by the handler layer to isolate requests).
+  rpc CloneField(CloneFieldRequest) returns (CloneFieldResponse);
+
+  // Deep-copy a Robot.
+  rpc CloneRobot(CloneRobotRequest) returns (CloneRobotResponse);
+
+  // Generate headland rings + inner cultivable area for a Field.
+  rpc GenerateHeadland(GenerateHeadlandRequest) returns (GenerateHeadlandResponse);
+
+  // Generate coverage swaths inside a FieldWithHeadlands.
+  rpc GenerateSwaths(GenerateSwathsRequest) returns (GenerateSwathsResponse);
+
+  // Order swaths into a traversal sequence (Boustrophedon, Snake, Spiral).
+  rpc SortSwaths(SortSwathsRequest) returns (SortSwathsResponse);
+
+  // Build a route with turn connections between sorted swath groups.
+  rpc GenerateRoute(GenerateRouteRequest) returns (GenerateRouteResponse);
+
+  // Plan a smooth drivable Path from a Route (terminal step).
+  rpc PlanPath(PlanPathRequest) returns (PlanPathResponse);
+}
+
+// =====================================================================
+// Core domain messages (mirror f2c C++ data model)
+//
+// Geometry on the wire is WKT stored as `bytes`. The Go handler layer
+// parses WKT with twpayne/go-geom (or simplefeatures) to convert to/from
+// the OpenAPI GeoJSON surface. Rationale: smaller payloads on large
+// fields + exact round-trip through GDAL's WKT serializer.
+// =====================================================================
+
+// Coordinate reference system descriptor. EPSG-only in v2.0.
+message CRS {
+  // EPSG code. 0 means "unknown/unprojected".
+  int32 epsg = 1;
+  // Optional UTM zone hint (e.g., "31N"). Empty if not UTM.
+  string utm_zone = 2;
+  // Full CRS string as f2c stores it (WKT/PROJ string, for round-trip
+  // fidelity with the C++ side).
+  string raw = 3;
+}
+
+// A 2D point in the active CRS.
+message Point {
+  double x = 1;
+  double y = 2;
+}
+
+// A parsed field. `geometry_wkt` is the field cells serialized as WKT in
+// the CRS given by `crs`.
+message Field {
+  // Opaque client handle (echoed in OpenAPI journey URIs; the server is
+  // stateless and does not look this up).
+  string id = 1;
+  CRS crs = 2;
+  // WKT of the field's Cells (POLYGON or MULTIPOLYGON).
+  bytes geometry_wkt = 3;
+  // Local-metric origin used for projection.
+  Point ref_point = 4;
+}
+
+// A Field augmented with computed headlands and the inner cultivable area.
+message FieldWithHeadlands {
+  Field field = 1;
+  // WKT of the headland rings (MULTILINESTRING or MULTIPOLYGON).
+  bytes headlands_wkt = 2;
+  // WKT of the inner cells (field minus headlands).
+  bytes inner_field_wkt = 3;
+  double headland_width_m = 4;
+  int32 headland_count = 5;
+}
+
+// Mirror of f2c::types::Robot.
+message Robot {
+  string name = 1;
+  double width_m = 2;
+  double cov_width_m = 3;
+  double min_turning_radius_m = 4;
+  double max_curv = 5;
+  double max_diff_curv = 6;
+  double cruise_vel_mps = 7;
+  // Optional override for turn velocity; 0 = inherit cruise_vel.
+  double turn_vel_mps = 8;
+}
+
+// Mirror of f2c::types::Swath.
+message Swath {
+  int32 id = 1;
+  // WKT LINESTRING of the swath path in the parent field's CRS.
+  bytes path_wkt = 2;
+  double width_m = 3;
+  SwathType type = 4;
+  bool creation_dir = 5;
+}
+
+enum SwathType {
+  SWATH_TYPE_UNSPECIFIED = 0;
+  SWATH_TYPE_MAINLAND = 1;
+  SWATH_TYPE_HEADLAND = 2;
+}
+
+// Mirror of f2c::types::Swaths — an ordered collection of Swath bound to
+// the Field they were generated for. The field is carried forward so
+// sort/route/path RPCs do not need to re-parse.
+message Swaths {
+  FieldWithHeadlands field = 1;
+  repeated Swath items = 2;
+  // Set by SortSwaths; indicates the items are in traversal order.
+  bool sorted = 3;
+}
+
+// A turn connection between two swaths, as a MultiPoint in field CRS.
+message RouteConnection {
+  int32 from_swath_id = 1;
+  int32 to_swath_id = 2;
+  // WKT MULTIPOINT of the turn connection vertices.
+  bytes points_wkt = 3;
+}
+
+// Mirror of f2c::types::Route.
+message Route {
+  // Field (with headlands) the route was planned for.
+  FieldWithHeadlands field = 1;
+  // Ordered swaths (must be sorted=true).
+  Swaths swaths = 2;
+  // Turn connections. connections[i] joins swath items[i] and items[i+1].
+  repeated RouteConnection connections = 3;
+}
+
+// Mirror of f2c::types::PathState.
+message PathState {
+  Point point = 1;
+  double angle_rad = 2;
+  double length_m = 3;
+  double velocity = 4;
+  PathDirection direction = 5;
+  PathSectionType section_type = 6;
+}
+
+enum PathDirection {
+  PATH_DIRECTION_UNSPECIFIED = 0;
+  PATH_DIRECTION_FORWARD = 1;
+  PATH_DIRECTION_BACKWARD = 2;
+}
+
+enum PathSectionType {
+  PATH_SECTION_TYPE_UNSPECIFIED = 0;
+  PATH_SECTION_TYPE_SWATH = 1;
+  PATH_SECTION_TYPE_TURN = 2;
+}
+
+// Mirror of f2c::types::Path. Terminal output.
+message Path {
+  FieldWithHeadlands field = 1;
+  repeated PathState states = 2;
+  double length_m = 3;
+  double task_time_s = 4;
+}
+
+// Algorithm enums ---------------------------------------------------
+
+enum SortAlgorithm {
+  SORT_ALGORITHM_UNSPECIFIED = 0;
+  SORT_ALGORITHM_BOUSTROPHEDON = 1;
+  SORT_ALGORITHM_SNAKE = 2;
+  SORT_ALGORITHM_SPIRAL = 3;
+}
+
+enum TurningAlgorithm {
+  TURNING_ALGORITHM_UNSPECIFIED = 0;
+  TURNING_ALGORITHM_DUBINS = 1;
+  TURNING_ALGORITHM_DUBINS_CC = 2;
+  TURNING_ALGORITHM_REEDS_SHEPP = 3;
+  TURNING_ALGORITHM_REEDS_SHEPP_HC = 4;
+}
+
+// =====================================================================
+// RPC request/response messages
+// =====================================================================
+
+message ParseGeoJSONRequest {
+  // Raw GeoJSON FeatureCollection text.
+  string geojson = 1;
+  // Optional target CRS; if unset, the server picks a local UTM zone.
+  CRS target_crs = 2;
+  // Optional client-supplied id; if empty, the server generates one.
+  string id = 3;
+}
+
+message ParseGeoJSONResponse {
+  Field field = 1;
+}
+
+message TransformToUTMRequest {
+  Field field = 1;
+}
+
+message TransformToUTMResponse {
+  Field field = 1;
+}
+
+message CloneFieldRequest {
+  Field field = 1;
+}
+
+message CloneFieldResponse {
+  Field field = 1;
+}
+
+message CloneRobotRequest {
+  Robot robot = 1;
+}
+
+message CloneRobotResponse {
+  Robot robot = 1;
+}
+
+message GenerateHeadlandRequest {
+  Field field = 1;
+  Robot robot = 2;
+  double width_m = 3;
+  int32 count = 4;
+}
+
+message GenerateHeadlandResponse {
+  FieldWithHeadlands field_with_headlands = 1;
+}
+
+message GenerateSwathsRequest {
+  FieldWithHeadlands field_with_headlands = 1;
+  Robot robot = 2;
+  // angle_rad is optional. When absent the server runs brute-force
+  // optimisation (minimises swath count) to pick the best heading.
+  optional double angle_rad = 3;
+  double width_m = 4;
+}
+
+message GenerateSwathsResponse {
+  Swaths swaths = 1;
+}
+
+message SortSwathsRequest {
+  Swaths swaths = 1;
+  SortAlgorithm algorithm = 2;
+  int32 variant = 3;
+  // When set, the server iterates all sort variants and returns the one
+  // whose first swath start is closest to this point (projected UTM coords).
+  // When absent, uses the variant field as before.
+  optional Point start_point = 4;
+}
+
+message SortSwathsResponse {
+  Swaths swaths = 1;
+}
+
+message GenerateRouteRequest {
+  Swaths swaths = 1;
+}
+
+message GenerateRouteResponse {
+  Route route = 1;
+}
+
+message PlanPathRequest {
+  Route route = 1;
+  Robot robot = 2;
+  TurningAlgorithm turning_algorithm = 3;
+}
+
+message PlanPathResponse {
+  Path path = 1;
+}

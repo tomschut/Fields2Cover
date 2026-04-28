@@ -1,0 +1,1061 @@
+openapi: 3.0.3
+info:
+  title: Fields2Cover Journey API
+  version: 2.0.0
+  description: |
+    Journey-first coverage path planning API. Every endpoint's response body is a
+    superset of the next endpoint's request body — clients walk the pipeline by
+    following `journey.next.uri` without adaptation.
+
+    Pipeline order:
+      fields:parse -> headlands:generate -> swaths:generate -> swaths:sort
+      -> routes:generate -> paths:plan
+
+    Geometry on the wire is inline GeoJSON (RFC 7946) in WGS84 unless an endpoint
+    has already projected the field to a metric CRS (in which case `field.crs`
+    advertises the EPSG code and subsequent steps stay in that projection).
+
+    The server is stateless. `{id}` path parameters are journey-legibility handles
+    returned by `/fields:parse` and echoed back by the client; the server does NOT
+    look them up — the full `Field` object is always in the request body.
+  license:
+    name: BSD-3-Clause
+    url: https://opensource.org/licenses/BSD-3-Clause
+
+servers:
+  - url: http://localhost:8080
+    description: Local dev server
+
+tags:
+  - name: journey
+    description: Journey-first pipeline steps
+
+paths:
+  /fields:parse:
+    post:
+      operationId: parseField
+      summary: Parse a GeoJSON FeatureCollection into a typed Field
+      description: |
+        Accepts an inline GeoJSON FeatureCollection, projects it to a local metric
+        CRS (UTM), and returns a typed `Field` payload ready to feed to
+        `/headlands:generate` verbatim.
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParseFieldRequest'
+            examples:
+              minimal:
+                $ref: '#/components/examples/ParseFieldRequestExample'
+      responses:
+        '200':
+          description: Field parsed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseFieldResponse'
+              examples:
+                minimal:
+                  $ref: '#/components/examples/ParseFieldResponseExample'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /headlands:generate:
+    post:
+      operationId: generateHeadlands
+      summary: Generate headland rings for a parsed field
+      description: |
+        Generates headland rings around a parsed field's boundary and returns a
+        `FieldWithHeadlands` payload containing the original field, the headland
+        ring geometry, and the inner cultivable area. Feed the response verbatim
+        to `/swaths:generate`. The field ships in the request body — the server
+        is stateless and does not store fields.
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateHeadlandsRequest'
+      responses:
+        '200':
+          description: Headlands generated; field is now ready for swath generation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateHeadlandsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /swaths:generate:
+    post:
+      operationId: generateSwaths
+      summary: Generate coverage swaths inside a field's inner (post-headland) area
+      description: |
+        Generates parallel coverage swaths inside the inner cultivable area of a
+        `FieldWithHeadlands` at the supplied heading. Returns a `Swaths` payload
+        ready to feed to `/swaths:sort`. The field-with-headlands ships in the
+        request body — the server is stateless.
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateSwathsRequest'
+      responses:
+        '200':
+          description: Swaths generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateSwathsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /swaths:sort:
+    post:
+      operationId: sortSwaths
+      summary: Order swaths into a traversal sequence
+      description: |
+        Orders an unsorted `Swaths` payload into a traversal sequence according to
+        the selected algorithm (e.g., boustrophedon). Returns the same `Swaths`
+        shape with `sorted=true`, ready to feed to `/routes:generate`.
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SortSwathsRequest'
+      responses:
+        '200':
+          description: Swaths sorted into traversal order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SortSwathsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /routes:generate:
+    post:
+      operationId: generateRoute
+      summary: Build a route with turn connections between sorted swaths
+      description: |
+        Builds a `Route` from sorted swaths by inserting turn connections between
+        consecutive swath groups. The field and swaths are carried forward in the
+        response so `/paths:plan` receives everything it needs in one payload.
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRouteRequest'
+      responses:
+        '200':
+          description: Route built
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateRouteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /paths:plan:
+    post:
+      operationId: planPath
+      summary: Plan a smooth drivable path from a route (terminal step)
+      description: |
+        Plans a smooth drivable path through a `Route` using the selected turning
+        algorithm. This is the terminal step of the pipeline; the response's
+        `journey.next` link is null.
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanPathRequest'
+      responses:
+        '200':
+          description: Drivable path planned (terminal step; journey.next is null)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanPathResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /pipeline/plan-coverage:
+    post:
+      operationId: planCoverage
+      summary: Run the full coverage pipeline in one round-trip (80% case)
+      description: |
+        One-shot shortcut that executes the full field->headland->swath->sort->
+        route->path pipeline server-side. Returns the terminal `Path` plus
+        every intermediate payload so clients can introspect / debug / reuse
+        pieces of the run. All business logic is shared with the granular
+        journey endpoints (SHC-03).
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCoverageRequest'
+      responses:
+        '200':
+          description: Full pipeline executed; path + all intermediates returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanCoverageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/BadRequest'
+
+  /pipeline/plan-swaths:
+    post:
+      operationId: planSwaths
+      summary: Cheap prefix of the pipeline — stops after sort-swaths
+      description: |
+        Runs the pipeline's cheap prefix (parse -> headland -> swaths ->
+        sort) in one round-trip and stops there. Clients typically call
+        this to preview the swath layout on a map, let the user tweak
+        settings, and only pay for the expensive tail (route + path)
+        when the user explicitly commits via `/pipeline/resume` with
+        `start_step=generate-route` and the sorted swaths from this
+        response. Shares the same per-step helpers as the granular
+        endpoints (SHC-03).
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCoverageRequest'
+      responses:
+        '200':
+          description: Swaths planned and sorted; route+path NOT generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanSwathsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/BadRequest'
+
+  /pipeline/resume:
+    post:
+      operationId: resumePipeline
+      summary: Resume the pipeline from an arbitrary intermediate step
+      description: |
+        Accepts any intermediate payload from a prior journey run (a `Field`,
+        `FieldWithHeadlands`, `Swaths`, sorted `Swaths`, or `Route`) and
+        executes every subsequent step. Lets clients cherry-pick which
+        steps to override without re-running the earlier ones. Shares the
+        same per-step helpers as the granular endpoints (SHC-03).
+      tags: [journey]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumePipelineRequest'
+      responses:
+        '200':
+          description: Pipeline resumed; result includes the supplied intermediates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanCoverageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/BadRequest'
+
+components:
+
+  responses:
+    BadRequest:
+      description: Malformed request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+
+    # --- Error envelope -------------------------------------------------
+
+    Error:
+      type: object
+      required: [code, message]
+      description: Error envelope returned on 4xx/5xx responses
+      properties:
+        code:
+          type: string
+          description: Stable machine-readable error code
+          example: 'INVALID_GEOJSON'
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: string
+          description: Optional extra context
+      additionalProperties: false
+
+    # --- Journey envelope (sibling of payload on every response) --------
+
+    Journey:
+      type: object
+      required: [step_name, next, back]
+      description: |
+        Navigation metadata sibling to every response payload. Clients follow
+        `next.uri` to chain pipeline steps. `back.uri` allows re-running an
+        earlier step with a modified payload.
+      properties:
+        step_name:
+          type: string
+          description: Canonical step identifier
+          enum:
+            - fields:parse
+            - headlands:generate
+            - swaths:generate
+            - swaths:sort
+            - routes:generate
+            - paths:plan
+        next:
+          allOf:
+            - $ref: '#/components/schemas/JourneyLink'
+          nullable: true
+          description: Link to the next step, or null if this is the terminal step
+        back:
+          allOf:
+            - $ref: '#/components/schemas/JourneyLink'
+          nullable: true
+          description: Link back to the previous step, or null if this is the first step
+      additionalProperties: false
+
+    JourneyLink:
+      type: object
+      required: [uri, method, body_schema_ref]
+      description: Hypermedia link pointing at the next or previous journey step
+      properties:
+        uri:
+          type: string
+          description: Absolute URI template for the linked step
+          example: '/fields/{id}/headlands:generate'
+        method:
+          type: string
+          enum: [POST]
+        body_schema_ref:
+          type: string
+          description: JSON pointer to the body schema the linked step accepts
+          example: '#/components/schemas/GenerateHeadlandsRequest'
+      additionalProperties: false
+
+    # --- Core domain types ---------------------------------------------
+
+    GeoJSONFeatureCollection:
+      type: object
+      required: [type, features]
+      description: RFC 7946 GeoJSON FeatureCollection in WGS84 unless otherwise noted
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, geometry]
+            properties:
+              type:
+                type: string
+                enum: [Feature]
+              properties:
+                type: object
+                nullable: true
+              geometry:
+                type: object
+                description: GeoJSON geometry (Polygon, MultiPolygon, LineString, etc.)
+      additionalProperties: true
+
+    CRS:
+      type: object
+      required: [epsg]
+      description: Coordinate reference system descriptor (EPSG-only in v2.0)
+      properties:
+        epsg:
+          type: integer
+          description: EPSG code (e.g., 4326 for WGS84, 32631 for UTM31N)
+          example: 32631
+        utm_zone:
+          type: string
+          description: Optional UTM zone hint
+          example: '31N'
+      additionalProperties: false
+
+    Field:
+      type: object
+      required: [id, crs, geometry]
+      description: |
+        Parsed field. `geometry` is a GeoJSON FeatureCollection expressed in
+        `crs` (typically a local UTM zone after parsing). Downstream steps
+        operate in this CRS until `/paths:plan` returns the final path.
+      properties:
+        id:
+          type: string
+          description: Opaque client-visible handle (echoed in journey URIs)
+        crs:
+          $ref: '#/components/schemas/CRS'
+        geometry:
+          $ref: '#/components/schemas/GeoJSONFeatureCollection'
+        ref_point:
+          type: array
+          description: "[x, y] local-metric origin used for projection"
+          items:
+            type: number
+            format: double
+          minItems: 2
+          maxItems: 2
+      additionalProperties: false
+
+    FieldWithHeadlands:
+      type: object
+      required: [field, headlands, inner_field, headland_width_m]
+      description: |
+        A `Field` augmented with computed headland rings and the inner cultivable
+        area. Feed this verbatim to `/fields/{id}/swaths:generate`.
+      properties:
+        field:
+          $ref: '#/components/schemas/Field'
+        headlands:
+          $ref: '#/components/schemas/GeoJSONFeatureCollection'
+          description: Headland ring geometry in field.crs
+        inner_field:
+          $ref: '#/components/schemas/GeoJSONFeatureCollection'
+          description: Inner cultivable cells (field minus headlands) in field.crs
+        headland_width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+      additionalProperties: false
+
+    Swath:
+      type: object
+      required: [id, path, width_m, type]
+      description: A single coverage swath line bound to a parent field's CRS
+      properties:
+        id:
+          type: integer
+          minimum: 0
+        path:
+          type: object
+          description: GeoJSON LineString geometry in the parent field's CRS
+          required: [type, coordinates]
+          properties:
+            type:
+              type: string
+              enum: [LineString]
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  type: number
+                  format: double
+                minItems: 2
+        width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        type:
+          type: string
+          enum: [MAINLAND, HEADLAND]
+      additionalProperties: false
+
+    Swaths:
+      type: object
+      required: [field, items]
+      description: |
+        An ordered list of swaths bound to the field they were generated for.
+        `field` is carried forward so sort/route/path steps do not need to
+        re-parse it.
+      properties:
+        field:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Swath'
+        sorted:
+          type: boolean
+          description: True once /swaths:sort has produced an ordering
+          default: false
+      additionalProperties: false
+
+    RouteConnection:
+      type: object
+      required: [from_swath_id, to_swath_id, points]
+      description: Turn connection between two swaths (MultiPoint in field CRS)
+      properties:
+        from_swath_id:
+          type: integer
+          minimum: 0
+        to_swath_id:
+          type: integer
+          minimum: 0
+        points:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: double
+            minItems: 2
+            maxItems: 2
+          minItems: 2
+      additionalProperties: false
+
+    Route:
+      type: object
+      required: [field, swaths, connections]
+      description: Ordered swath groups + turn connections. Feed to /paths:plan.
+      properties:
+        field:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+        swaths:
+          $ref: '#/components/schemas/Swaths'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteConnection'
+      additionalProperties: false
+
+    PathState:
+      type: object
+      required: [point, angle_rad, length_m, velocity, direction, section_type]
+      description: Single pose along a planned drivable path
+      properties:
+        point:
+          type: array
+          items:
+            type: number
+            format: double
+          minItems: 2
+          maxItems: 2
+        angle_rad:
+          type: number
+          format: double
+        length_m:
+          type: number
+          format: double
+          minimum: 0
+        velocity:
+          type: number
+          format: double
+        direction:
+          type: string
+          enum: [FORWARD, BACKWARD]
+        section_type:
+          type: string
+          enum: [SWATH, TURN]
+      additionalProperties: false
+
+    Path:
+      type: object
+      required: [field, states, length_m, task_time_s]
+      description: |
+        Terminal coverage path as a sequence of PathStates in field.crs. The
+        `journey.next` link on the response is null — this is the end of the
+        pipeline.
+      properties:
+        field:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+        states:
+          type: array
+          items:
+            $ref: '#/components/schemas/PathState'
+        length_m:
+          type: number
+          format: double
+          minimum: 0
+        task_time_s:
+          type: number
+          format: double
+          minimum: 0
+      additionalProperties: false
+
+    # --- Robot spec (request-side only) --------------------------------
+
+    Robot:
+      type: object
+      required: [width_m, cov_width_m]
+      description: Robot specification. Passed on every endpoint that needs it.
+      properties:
+        name:
+          type: string
+        width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        cov_width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        min_turning_radius_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        max_curv:
+          type: number
+          format: double
+        max_diff_curv:
+          type: number
+          format: double
+        cruise_vel_mps:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        turn_vel_mps:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+      additionalProperties: false
+
+    # --- Request / Response envelopes (journey sibling everywhere) -----
+
+    ParseFieldRequest:
+      type: object
+      required: [geojson]
+      description: Request body for /fields:parse
+      properties:
+        geojson:
+          $ref: '#/components/schemas/GeoJSONFeatureCollection'
+          description: Raw input FeatureCollection (WGS84 expected)
+        target_crs:
+          $ref: '#/components/schemas/CRS'
+          description: |
+            Optional target CRS for projection. If omitted, the server picks an
+            appropriate local UTM zone based on the input centroid.
+      additionalProperties: false
+
+    ParseFieldResponse:
+      type: object
+      required: [field, journey]
+      description: Response body for /fields:parse
+      properties:
+        field:
+          $ref: '#/components/schemas/Field'
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    GenerateHeadlandsRequest:
+      type: object
+      required: [field, robot, width_m]
+      description: Request body for /fields/{id}/headlands:generate
+      properties:
+        field:
+          $ref: '#/components/schemas/Field'
+        robot:
+          $ref: '#/components/schemas/Robot'
+        width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Headland ring width in meters
+        count:
+          type: integer
+          minimum: 1
+          default: 3
+          description: Number of headland rings
+      additionalProperties: false
+
+    GenerateHeadlandsResponse:
+      type: object
+      required: [field_with_headlands, journey]
+      description: Response body for /fields/{id}/headlands:generate
+      properties:
+        field_with_headlands:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    GenerateSwathsRequest:
+      type: object
+      required: [field_with_headlands, robot, width_m]
+      description: Request body for /fields/{id}/swaths:generate
+      properties:
+        field_with_headlands:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+        robot:
+          $ref: '#/components/schemas/Robot'
+        angle_rad:
+          type: number
+          format: double
+          description: |
+            Swath heading in radians (0 = east). When omitted the server
+            automatically selects the heading that minimises the number of
+            swaths (brute-force search over [0, π)).
+        width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+      additionalProperties: false
+
+    GenerateSwathsResponse:
+      type: object
+      required: [swaths, journey]
+      description: Response body for /fields/{id}/swaths:generate
+      properties:
+        swaths:
+          $ref: '#/components/schemas/Swaths'
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    SortSwathsRequest:
+      type: object
+      required: [swaths]
+      description: Request body for /swaths:sort
+      properties:
+        swaths:
+          $ref: '#/components/schemas/Swaths'
+        algorithm:
+          type: string
+          enum: [BOUSTROPHEDON, SNAKE, SPIRAL]
+          default: BOUSTROPHEDON
+        variant:
+          type: integer
+          minimum: 0
+          maximum: 3
+          default: 0
+      additionalProperties: false
+
+    SortSwathsResponse:
+      type: object
+      required: [swaths, journey]
+      description: Response body for /swaths:sort
+      properties:
+        swaths:
+          $ref: '#/components/schemas/Swaths'
+          description: Same Swaths shape, now with sorted=true
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    GenerateRouteRequest:
+      type: object
+      required: [swaths]
+      description: Request body for /routes:generate
+      properties:
+        swaths:
+          $ref: '#/components/schemas/Swaths'
+          description: Sorted swaths (field is embedded)
+      additionalProperties: false
+
+    GenerateRouteResponse:
+      type: object
+      required: [route, journey]
+      description: Response body for /routes:generate
+      properties:
+        route:
+          $ref: '#/components/schemas/Route'
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    PlanPathRequest:
+      type: object
+      required: [route, robot, turning_algorithm]
+      description: Request body for /paths:plan
+      properties:
+        route:
+          $ref: '#/components/schemas/Route'
+        robot:
+          $ref: '#/components/schemas/Robot'
+        turning_algorithm:
+          type: string
+          enum: [DUBINS, DUBINS_CC, REEDS_SHEPP, REEDS_SHEPP_HC]
+      additionalProperties: false
+
+    PlanPathResponse:
+      type: object
+      required: [path, journey]
+      description: Response body for /paths:plan
+      properties:
+        path:
+          $ref: '#/components/schemas/Path'
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    # --- Shortcut / Pipeline endpoints (Phase 12) ----------------------
+
+    PlanCoverageRequest:
+      type: object
+      required: [geojson, robot, headland_width_m, swath_width_m, turning_algorithm]
+      description: |
+        Full-pipeline input. The server picks the local UTM zone if
+        target_crs is omitted. SortAlgorithm / variant / headland_count
+        default to the same values the granular endpoints use.
+      properties:
+        geojson:
+          $ref: '#/components/schemas/GeoJSONFeatureCollection'
+        target_crs:
+          $ref: '#/components/schemas/CRS'
+        robot:
+          $ref: '#/components/schemas/Robot'
+        headland_width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        headland_count:
+          type: integer
+          minimum: 1
+          default: 3
+        swath_angle_rad:
+          type: number
+          format: double
+          description: |
+            Swath heading in radians (0 = east). When omitted the server
+            automatically selects the heading that minimises the number of
+            swaths (brute-force search over [0, π)).
+        swath_width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        sort_algorithm:
+          type: string
+          enum: [BOUSTROPHEDON, SNAKE, SPIRAL]
+          default: BOUSTROPHEDON
+        sort_variant:
+          type: integer
+          minimum: 0
+          maximum: 3
+          default: 0
+        sort_start_point:
+          type: array
+          items:
+            type: number
+            format: double
+          minItems: 2
+          maxItems: 2
+          description: |
+            WGS84 [lng, lat] of the desired route start point. When set, the server
+            auto-selects the sort variant whose first swath is nearest to this point.
+            Takes priority over sort_variant when both are provided.
+        turning_algorithm:
+          type: string
+          enum: [DUBINS, DUBINS_CC, REEDS_SHEPP, REEDS_SHEPP_HC]
+      additionalProperties: false
+
+    FieldIntermediates:
+      type: object
+      description: |
+        Every intermediate payload produced by a full pipeline run. On a
+        RunAll response, every field is populated. On a RunFrom response,
+        only the fields from the start step onward are populated -- the
+        earlier fields are whatever the caller supplied (echoed back).
+      properties:
+        field:
+          $ref: '#/components/schemas/Field'
+          nullable: true
+        field_with_headlands:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+          nullable: true
+        swaths:
+          $ref: '#/components/schemas/Swaths'
+          nullable: true
+        sorted_swaths:
+          $ref: '#/components/schemas/Swaths'
+          nullable: true
+        route:
+          $ref: '#/components/schemas/Route'
+          nullable: true
+      additionalProperties: false
+
+    PlanCoverageResponse:
+      type: object
+      required: [path, intermediates, journey]
+      description: |
+        Full-pipeline output. `path` is the terminal planned path; every
+        intermediate payload is returned under `intermediates` for
+        debuggability and partial reuse. `journey.next` is null (the
+        full pipeline is terminal -- the only follow-up is to re-run with
+        different params).
+      properties:
+        path:
+          $ref: '#/components/schemas/Path'
+        intermediates:
+          $ref: '#/components/schemas/FieldIntermediates'
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    PlanSwathsResponse:
+      type: object
+      required: [field_with_headlands, sorted_swaths, journey]
+      description: |
+        Output of the cheap `/pipeline/plan-swaths` prefix. Contains the
+        projected field with headlands and the sorted swaths but NOT the
+        generated route or terminal path. Feed `sorted_swaths` into
+        `/pipeline/resume` with `start_step=generate-route` to complete
+        the run when the user commits. `journey.next` points at the
+        resume endpoint so the client UX can chain the two calls.
+      properties:
+        field_with_headlands:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+        sorted_swaths:
+          $ref: '#/components/schemas/Swaths'
+        journey:
+          $ref: '#/components/schemas/Journey'
+      additionalProperties: false
+
+    ResumePipelineRequest:
+      type: object
+      required: [start_step, robot, turning_algorithm]
+      description: |
+        Resume-from-step input. Exactly one of {field, field_with_headlands,
+        swaths, sorted_swaths, route} must be populated, and it must match
+        start_step (e.g. start_step="sort-swaths" pairs with swaths; see
+        the per-step table in the description of `start_step`).
+      properties:
+        start_step:
+          type: string
+          enum:
+            - generate-headland
+            - generate-swaths
+            - sort-swaths
+            - generate-route
+            - plan-path
+          description: |
+            Step to start execution from. "parse-field" is intentionally
+            not a valid start step -- call /pipeline/plan-coverage instead.
+            Pairings:
+              generate-headland -> field
+              generate-swaths   -> field_with_headlands
+              sort-swaths       -> swaths
+              generate-route    -> sorted_swaths
+              plan-path         -> route
+        field:
+          $ref: '#/components/schemas/Field'
+          nullable: true
+        field_with_headlands:
+          $ref: '#/components/schemas/FieldWithHeadlands'
+          nullable: true
+        swaths:
+          $ref: '#/components/schemas/Swaths'
+          nullable: true
+        sorted_swaths:
+          $ref: '#/components/schemas/Swaths'
+          nullable: true
+        route:
+          $ref: '#/components/schemas/Route'
+          nullable: true
+        robot:
+          $ref: '#/components/schemas/Robot'
+        headland_width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        headland_count:
+          type: integer
+          minimum: 1
+          default: 3
+        swath_angle_rad:
+          type: number
+          format: double
+          description: |
+            Swath heading in radians (0 = east). When omitted the server
+            automatically selects the heading that minimises the number of
+            swaths (brute-force search over [0, π)).
+        swath_width_m:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+        sort_algorithm:
+          type: string
+          enum: [BOUSTROPHEDON, SNAKE, SPIRAL]
+          default: BOUSTROPHEDON
+        sort_variant:
+          type: integer
+          minimum: 0
+          maximum: 3
+          default: 0
+        turning_algorithm:
+          type: string
+          enum: [DUBINS, DUBINS_CC, REEDS_SHEPP, REEDS_SHEPP_HC]
+      additionalProperties: false
+
+  examples:
+
+    ParseFieldRequestExample:
+      summary: Minimal GeoJSON field
+      value:
+        geojson:
+          type: FeatureCollection
+          features:
+            - type: Feature
+              properties: null
+              geometry:
+                type: Polygon
+                coordinates:
+                  - - [4.7120, 52.3400]
+                    - [4.7140, 52.3400]
+                    - [4.7140, 52.3420]
+                    - [4.7120, 52.3420]
+                    - [4.7120, 52.3400]
+
+    ParseFieldResponseExample:
+      summary: Parsed field in UTM31N
+      value:
+        field:
+          id: 'fld_001'
+          crs:
+            epsg: 32631
+            utm_zone: '31N'
+          ref_point: [617000.0, 5799000.0]
+          geometry:
+            type: FeatureCollection
+            features:
+              - type: Feature
+                properties: null
+                geometry:
+                  type: Polygon
+                  coordinates:
+                    - - [0.0, 0.0]
+                      - [137.2, 0.0]
+                      - [137.2, 222.5]
+                      - [0.0, 222.5]
+                      - [0.0, 0.0]
+        journey:
+          step_name: 'fields:parse'
+          next:
+            uri: '/fields/fld_001/headlands:generate'
+            method: POST
+            body_schema_ref: '#/components/schemas/GenerateHeadlandsRequest'
+          back: null

@@ -41,26 +41,31 @@ Geometries<SAMETYPE, T, R, CHILDRENTYPE>::Iterator::Private::~Private() {}
 
 template <class SAMETYPE, class T, OGRwkbGeometryType R, class CHILDRENTYPE>
 void Geometries<SAMETYPE, T, R, CHILDRENTYPE>::Iterator::update() {
-  if (std::is_same<T, OGRMultiPoint>::value ||
-    std::is_same<T, OGRLinearRing>::value ||
-    std::is_same<T, OGRLineString>::value) {
-    if (!m_poPrivate->m_bUpdateChecked) {
-      CHILDRENTYPE oChildBefore;
-      static_cast<SAMETYPE*>(m_poPrivate->m_poSelf)->getGeometry(
-        m_poPrivate->m_nPos, oChildBefore);
-      if (oChildBefore != m_poPrivate->m_oChild) {
-          static_cast<SAMETYPE*>(m_poPrivate->m_poSelf)->setGeometry(
-             m_poPrivate->m_nPos, m_poPrivate->m_oChild);
-      }
-      m_poPrivate->m_bUpdateChecked = true;
+  // T-015 fix: write-back must run for EVERY Geometries specialization,
+  // not only MultiPoint / LinearRing / LineString. After Phase 7 T-002
+  // changed getGeometry(i, child) to return a deep copy (instead of an
+  // EmptyDestructor view), all child types need the write-back path —
+  // otherwise mutations through the iterator are silently dropped for
+  // Cell (OGRPolygon), Cells (OGRMultiPolygon), and MultiLineString
+  // (OGRMultiLineString). The equality guard below still skips the
+  // setGeometry call when the child was not mutated, so this does not
+  // regress const-iteration performance.
+  if (!m_poPrivate->m_bUpdateChecked) {
+    CHILDRENTYPE oChildBefore;
+    static_cast<SAMETYPE*>(m_poPrivate->m_poSelf)->getGeometry(
+      m_poPrivate->m_nPos, oChildBefore);
+    if (oChildBefore != m_poPrivate->m_oChild) {
+        static_cast<SAMETYPE*>(m_poPrivate->m_poSelf)->setGeometry(
+           m_poPrivate->m_nPos, m_poPrivate->m_oChild);
     }
+    m_poPrivate->m_bUpdateChecked = true;
   }
 }
 
 template <class SAMETYPE, class T, OGRwkbGeometryType R, class CHILDRENTYPE>
 Geometries<SAMETYPE, T, R, CHILDRENTYPE>::Iterator::Iterator(
     Geometries<SAMETYPE, T, R, CHILDRENTYPE>* poSelf, int nPos) :
-      m_poPrivate(new Private()) {
+      m_poPrivate(std::make_unique<Private>()) {
   m_poPrivate->m_poSelf = poSelf;
   m_poPrivate->m_nPos = nPos;
 }
@@ -105,7 +110,7 @@ Geometries<SAMETYPE, T, R, CHILDRENTYPE>::ConstIterator::ConstIterator(
 template <class SAMETYPE, class T, OGRwkbGeometryType R, class CHILDRENTYPE>
 Geometries<SAMETYPE, T, R, CHILDRENTYPE>::ConstIterator::ConstIterator(
     const Geometries<SAMETYPE, T, R, CHILDRENTYPE>* poSelf,
-        int nPos) : m_poPrivate(new Private()) {
+        int nPos) : m_poPrivate(std::make_unique<Private>()) {
   m_poPrivate->m_poSelf = poSelf;
   m_poPrivate->m_nPos = nPos;
 }

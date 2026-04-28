@@ -54,11 +54,11 @@ template <class T, OGRwkbGeometryType R>
 Geometry<T, R>::Geometry(Geometry&& g) = default;
 
 template <class T, OGRwkbGeometryType R>
-typename Geometry<T, R>::Geometry& Geometry<T, R>::operator=(
+Geometry<T, R>& Geometry<T, R>::operator=(
     Geometry&& g) = default;
 
 template <class T, OGRwkbGeometryType R>
-typename Geometry<T, R>::Geometry& Geometry<T, R>::operator=(
+Geometry<T, R>& Geometry<T, R>::operator=(
     const Geometry& g) = default;
 
 template <class T, OGRwkbGeometryType R>
@@ -326,7 +326,7 @@ OGRGeometry* Geometry<T, R>::OGRGeometryRebuildCurves(
       (poGeom->hasCurveGeometry(true) ||
       (poOtherGeom && poOtherGeom->hasCurveGeometry(true)))) {
     OGRGeometry *poCurveGeom = poOGRProduct->getCurveGeometry();
-    delete poOGRProduct;
+    OGRGeometryFactory::destroyGeometry(poOGRProduct);
     return poCurveGeom;
   }
   return poOGRProduct;

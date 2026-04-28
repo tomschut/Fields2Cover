@@ -12,13 +12,15 @@ project(Fields2Cover
 
 option(ALLOW_PARALLELIZATION "Allow parallel algorithms" ON)
 option(BUILD_TUTORIALS "Build tutorials" ON)
-option(BUILD_TESTS "Build tests" ON)
 option(BUILD_PYTHON "Build Python SWIG module" ON)
+option(BUILD_F2C_GRPC "Build f2c gRPC shim server" ON)
 option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_SHARED_LIBS "Build shared library(.so)" ON)
 option(USE_ORTOOLS_RELEASE "Get or-tools from release tarball" OFF)
 option(USE_ORTOOLS_FETCH_SRC "Get or-tools from source" OFF)
 option(USE_ORTOOLS_VENDOR "Get or-tools from ortools_vendor" OFF)
+option(ENABLE_SANITIZERS "Build with AddressSanitizer + UndefinedBehaviorSanitizer + LeakSanitizer" OFF)
+option(ENABLE_FUZZERS "Build libFuzzer harnesses (clang only)" OFF)
 
 
 # Set C++ standard
@@ -104,6 +106,38 @@ include(cmake/F2CCompilerOptions.cmake)
 f2c_set_compiler_options(Fields2Cover)
 
 
+if(ENABLE_SANITIZERS)
+  if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
+    message(FATAL_ERROR "ENABLE_SANITIZERS requires GCC or Clang, got ${CMAKE_CXX_COMPILER_ID}")
+  endif()
+  message(STATUS "Fields2Cover: sanitizers enabled (address,undefined,leak)")
+  set(F2C_SANITIZER_FLAGS
+    -fsanitize=address,undefined,leak
+    -fno-omit-frame-pointer
+    -fno-sanitize-recover=all
+    -O1
+    -g
+  )
+  target_compile_options(Fields2Cover PUBLIC ${F2C_SANITIZER_FLAGS})
+  target_link_options(Fields2Cover PUBLIC ${F2C_SANITIZER_FLAGS})
+endif()
+
+
+if(ENABLE_FUZZERS)
+  # Propagate fuzzer coverage + ASan/UBSan instrumentation into Fields2Cover
+  # itself so libFuzzer can get coverage feedback through the library. The
+  # harness binaries add `-fsanitize=fuzzer` (full) in tests/cpp/fuzz/.
+  set(F2C_FUZZ_LIB_FLAGS
+    -fsanitize=fuzzer-no-link,address,undefined
+    -fno-omit-frame-pointer
+    -O1
+    -g
+  )
+  target_compile_options(Fields2Cover PUBLIC ${F2C_FUZZ_LIB_FLAGS})
+  target_link_options(Fields2Cover PUBLIC ${F2C_FUZZ_LIB_FLAGS})
+endif()
+
+
 include(GNUInstallDirs)
 set(F2C_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/Fields2Cover)
 
@@ -155,6 +189,14 @@ if (BUILD_TUTORIALS)
 endif(BUILD_TUTORIALS)
 
 #####################################################
+################### f2c-grpc shim ###################
+#####################################################
+
+if (BUILD_F2C_GRPC)
+  add_subdirectory(f2c-grpc)
+endif(BUILD_F2C_GRPC)
+
+#####################################################
 ######################### swig ######################
 #####################################################
 
@@ -166,7 +208,7 @@ endif(BUILD_PYTHON)
 ######################### test ######################
 #####################################################
 
-if(BUILD_TESTS AND GNUPLOT_FOUND)
+if(BUILD_TESTING AND GNUPLOT_FOUND)
   find_package(GTest REQUIRED)
   include(CTest)
   enable_testing()
@@ -174,7 +216,19 @@ if(BUILD_TESTS AND GNUPLOT_FOUND)
     GTEST_COLOR=1 ${CMAKE_CTEST_COMMAND} --verbose --test-dir tests/
   )
   add_subdirectory(tests)
-endif(BUILD_TESTS AND GNUPLOT_FOUND)
+endif(BUILD_TESTING AND GNUPLOT_FOUND)
+
+#####################################################
+######################## fuzz #######################
+#####################################################
+
+if(ENABLE_FUZZERS)
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(FATAL_ERROR "ENABLE_FUZZERS requires clang, got ${CMAKE_CXX_COMPILER_ID}")
+  endif()
+  message(STATUS "Fields2Cover: libFuzzer harnesses enabled")
+  add_subdirectory(tests/cpp/fuzz)
+endif()
 
 #####################################################
 ######################### docs ######################

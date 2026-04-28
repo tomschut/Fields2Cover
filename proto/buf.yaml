@@ -1,0 +1,25 @@
+version: v2
+modules:
+  - path: .
+    name: buf.build/fields2cover/f2c
+lint:
+  use:
+    - STANDARD
+  except:
+    # Plan 09-02 mandates package `f2c.v1` without a separate v1/ directory
+    # (see CONTEXT.md: "our package is already f2c.v1 — the rule would want
+    # a separate v1 directory layout which we don't need for a single-file
+    # internal contract").
+    - PACKAGE_VERSION_SUFFIX
+    # Same rationale: the single-file contract lives at proto/f2c.proto
+    # (see plan 09-02 files_modified). Moving it under proto/f2c/v1/ would
+    # contradict the plan.
+    - PACKAGE_DIRECTORY_MATCH
+    # Plan 09-02 must_haves.key_links mandates `service F2C` (not F2CService).
+    # The service is an internal, single-service contract; the suffix rule
+    # adds no clarity here.
+    - SERVICE_SUFFIX
+  disallow_comment_ignores: false
+breaking:
+  use:
+    - FILE

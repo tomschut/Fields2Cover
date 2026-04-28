@@ -346,9 +346,21 @@ void Path::loadFile(const std::string& file) {
 Path& Path::populate(int number_points) {
   if (this->size() < 3) { return *this;}
 
+  // Pre-size the parallel temp vectors: at most this->size()+1 entries
+  // (one per non-zero-len input state plus the back().atEnd() sentinel).
+  // Reserving avoids the geometric-growth reallocations that show up in
+  // the BM_PathInterp profile for large input paths.
+  const size_t in_n = this->size() + 1;
   std::vector<double> x, y, ang_prov, old_vel, len;
   std::vector<PathDirection> old_dir;
   std::vector<PathSectionType> old_type;
+  x.reserve(in_n);
+  y.reserve(in_n);
+  ang_prov.reserve(in_n);
+  len.reserve(in_n);
+  old_vel.reserve(in_n);
+  old_dir.reserve(in_n);
+  old_type.reserve(in_n);
   for (int i = 0; i < this->size(); ++i) {
     if (this->states_[i].len != 0.0) {
       x.emplace_back(this->states_[i].point.getX());
@@ -376,16 +388,40 @@ Path& Path::populate(int number_points) {
   CubicSpline s_y(t, y);
   CubicSpline s_ang(t, ang);
 
+  // Output vector growth was the dominant cost on BM_PathInterp/100000
+  // (17 reallocations + state-copy storms). Pre-size so addState() is
+  // a single in-place emplace per iteration.
   this->states_.clear();
+  this->states_.reserve(static_cast<size_t>(number_points));
 
   double step = t.back() / static_cast<double>(number_points);
   PathState state;
+  // The output sample positions `d = i * step` are monotonically
+  // increasing, so the lower_bound search is also monotone — track a
+  // running cursor instead of doing a fresh O(log n) lookup for every
+  // sample point. Drops the per-sample lookup from log n to amortised
+  // O(1) which is the second-order win on BM_PathInterp/100000.
+  size_t cursor = 0;
+  const size_t t_last = t.size() - 1;
   for (size_t i = 0; i < number_points; ++i) {
     double d = i * step;
     state.point = Point(s_x(d), s_y(d));
     state.angle = Point::mod_2pi(s_ang(d));
     state.len = step;
-    int it = std::lower_bound(t.begin(), t.end(), d + 1e-10) - t.begin() - 1;
+    // Match the original semantics exactly:
+    //   it = lower_bound(t, d + 1e-10) - 1
+    // i.e. the largest index with t[idx] < d + 1e-10. Original code
+    // could underflow to size_t(-1) when d == 0; preserved by clamping
+    // the eventual lookup index to t_last just like the original
+    // (which would index old_vel[-1] -- UB the upstream code never
+    // hit because populate() always starts at d=0 with t[0]=0, making
+    // lower_bound return iterator 0 and the -1 underflow into the
+    // last element of a freshly-cleared vector. We clamp instead.)
+    const double key = d + 1e-10;
+    while (cursor + 1 < t.size() && t[cursor + 1] < key) {
+      ++cursor;
+    }
+    const size_t it = (cursor <= t_last) ? cursor : t_last;
     state.velocity = old_vel[it];
     state.dir = old_dir[it];
     state.type = old_type[it];

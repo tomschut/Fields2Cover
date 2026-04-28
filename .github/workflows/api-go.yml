@@ -1,0 +1,71 @@
+# Copyright (C) 2026 Wageningen University — BSD-3-Clause
+#
+# CI gate for the Go API server (Phase 11).
+#
+# Runs on every push to main and every PR that touches api-go/, the
+# OpenAPI spec, or the proto contract. Required before merge per
+# TST-03.
+
+name: api-go
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api-go/**'
+      - 'proto/f2c.proto'
+      - '.github/workflows/api-go.yml'
+  pull_request:
+    paths:
+      - 'api-go/**'
+      - 'proto/f2c.proto'
+      - '.github/workflows/api-go.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: go test + vet
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: api-go
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+          cache-dependency-path: api-go/go.sum
+
+      - name: Download modules
+        run: go mod download
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Pipeline contract check (SHC-03)
+        run: bash scripts/check-pipeline-contract.sh
+
+      - name: go test (race + cover)
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-go-coverage
+          path: api-go/coverage.out
+          retention-days: 7
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ -f coverage.out ]; then
+            go tool cover -func=coverage.out | tail -n 1
+          fi

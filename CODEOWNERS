@@ -1,0 +1,11 @@
+# CODEOWNERS — required reviewers for source-of-truth contract files.
+#
+# The two files below are the v2.0 API contracts (HTTP + internal gRPC).
+# They are intentionally disjoint. See docs/contracts.md for the rationale.
+# Any change to either file requires explicit review.
+
+/api-go/openapi.yaml   @tomschut
+/proto/f2c.proto       @tomschut
+/proto/buf.yaml        @tomschut
+/proto/buf.gen.yaml    @tomschut
+/docs/contracts.md     @tomschut

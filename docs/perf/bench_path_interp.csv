@@ -1,0 +1,4 @@
+benchmark,input,median_ms,stddev_ms,path_states
+BM_PathInterp,1000,1.283,0.075,1000
+BM_PathInterp,10000,3.130,0.088,10000
+BM_PathInterp,100000,23.118,0.984,100000

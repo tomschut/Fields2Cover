@@ -1,0 +1,15 @@
+# Build output
+/bin/
+/dist/
+
+# Local env
+.env
+.env.local
+
+# Coverage
+coverage.out
+coverage.html
+
+# Editor
+.idea/
+.vscode/

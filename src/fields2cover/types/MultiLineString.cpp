@@ -73,7 +73,10 @@ void MultiLineString::getGeometry(size_t i, LineString& line) {
     throw std::out_of_range(
         "Geometry does not contain point " + std::to_string(i));
   }
-  line = LineString(this->data_->getGeometryRef(i), EmptyDestructor());
+  // T-002: deep-copy via cloning ctor so `line` owns its data. Previously
+  // an EmptyDestructor view dangled if the parent MultiLineString was
+  // destroyed before the out-parameter.
+  line = LineString(this->data_->getGeometryRef(i));
 }
 
 void MultiLineString::getGeometry(size_t i, LineString& line) const {
@@ -81,7 +84,8 @@ void MultiLineString::getGeometry(size_t i, LineString& line) const {
     throw std::out_of_range(
         "Geometry does not contain point " + std::to_string(i));
   }
-  line = LineString(this->data_->getGeometryRef(i), EmptyDestructor());
+  // T-002: see non-const overload above.
+  line = LineString(this->data_->getGeometryRef(i));
 }
 
 LineString MultiLineString::getGeometry(size_t i) {

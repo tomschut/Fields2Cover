@@ -48,7 +48,20 @@ function(f2c_declare_dependencies)
       if(NOT ortools_POPULATED)
         FetchContent_Populate(ortools)
       endif()
-      list(INSERT CMAKE_PREFIX_PATH 0 "${ortools_SOURCE_DIR}")
+      # Set all dependency dirs explicitly for cross-compilation scenarios
+      set(ORTOOLS_CMAKE_DIR "${ortools_SOURCE_DIR}/lib/cmake")
+      set(ortools_DIR "${ORTOOLS_CMAKE_DIR}/ortools")
+      set(absl_DIR "${ORTOOLS_CMAKE_DIR}/absl")
+      set(protobuf_DIR "${ORTOOLS_CMAKE_DIR}/protobuf")
+      set(Protobuf_DIR "${ORTOOLS_CMAKE_DIR}/protobuf")
+      set(re2_DIR "${ORTOOLS_CMAKE_DIR}/re2")
+      set(Cbc_DIR "${ORTOOLS_CMAKE_DIR}/Cbc")
+      set(Cgl_DIR "${ORTOOLS_CMAKE_DIR}/Cgl")
+      set(Clp_DIR "${ORTOOLS_CMAKE_DIR}/Clp")
+      set(CoinUtils_DIR "${ORTOOLS_CMAKE_DIR}/CoinUtils")
+      set(Osi_DIR "${ORTOOLS_CMAKE_DIR}/Osi")
+      set(SCIP_DIR "${ORTOOLS_CMAKE_DIR}/scip")
+      set(utf8_range_DIR "${ORTOOLS_CMAKE_DIR}/utf8_range")
       find_package(ortools CONFIG REQUIRED)
       if(NOT ortools_FOUND)
         message(FATAL_ERROR "Failed to find ortools in release tarball")
@@ -72,11 +85,13 @@ function(f2c_declare_dependencies)
     GIT_TAG 13e3f5658144b3832fb1eb31a0e2f5a3cbf57db9
   )
   FetchContent_Declare(matplot FETCHCONTENT_UPDATES_DISCONNECTED
-    GIT_REPOSITORY https://github.com/alandefreitas/matplotplusplus
+    GIT_REPOSITORY https://github.com/alandefreitas/matplotplusplus.git
+    GIT_TAG 5d01eb3695b07634a2b6642fd423740dea9b026c
   )
 
   FetchContent_Declare(json FETCHCONTENT_UPDATES_DISCONNECTED
-    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG 4424a0fcc1c7fa640b5c87d26776d99150dacd10
   )
 
   FetchContent_MakeAvailable(steering_functions matplot json)

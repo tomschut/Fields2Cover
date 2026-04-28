@@ -17,7 +17,7 @@ namespace f2c::obj {
 class RemArea : public HGObjective {
  public:
   using HGObjective::computeCost;
-  bool isMinimizing(void) const override;
+  bool isMinimizing() const override;
 };
 
 }  // namespace f2c::obj

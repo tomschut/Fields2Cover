@@ -1,0 +1,17 @@
+version: v2
+plugins:
+  # Phase 11: Go types + gRPC client
+  - remote: buf.build/protocolbuffers/go
+    out: ../api-go/internal/f2cclient/gen
+    opt:
+      - paths=source_relative
+  - remote: buf.build/grpc/go
+    out: ../api-go/internal/f2cclient/gen
+    opt:
+      - paths=source_relative
+      - require_unimplemented_servers=false
+  # Phase 10: C++ types + gRPC server
+  - remote: buf.build/protocolbuffers/cpp
+    out: ../f2c-grpc/gen
+  - remote: buf.build/grpc/cpp
+    out: ../f2c-grpc/gen

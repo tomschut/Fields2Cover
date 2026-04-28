@@ -65,7 +65,10 @@ void Cells::getGeometry(size_t i, Cell& cell) {
     throw std::out_of_range(
         "Geometry does not contain point " + std::to_string(i));
   }
-  cell = Cell(this->data_->getGeometryRef(i), EmptyDestructor());
+  // T-002: deep-copy via cloning ctor so `cell` owns its data and outlives
+  // this parent. The previous EmptyDestructor path created a non-owning view
+  // that dangled if the parent was destroyed before the out-parameter.
+  cell = Cell(this->data_->getGeometryRef(i));
 }
 
 void Cells::getGeometry(size_t i, Cell& cell) const {
@@ -73,7 +76,8 @@ void Cells::getGeometry(size_t i, Cell& cell) const {
     throw std::out_of_range(
         "Geometry does not contain point " + std::to_string(i));
   }
-  cell = Cell(this->data_->getGeometryRef(i), EmptyDestructor());
+  // T-002: see non-const overload above.
+  cell = Cell(this->data_->getGeometryRef(i));
 }
 
 Cell Cells::getGeometry(size_t i) {
@@ -178,11 +182,16 @@ Cells Cells::unionCascaded() const {
 }
 
 Cells Cells::splitByLine(const LineString& line) const {
-  Cells cells = this->difference(this->buffer(line, 1e-8));
-  for (auto&& c : cells) {
-    c = Cell::buffer(c, 1e-8 * 0.5);
-  }
-  return cells;
+  // Historically a `for (auto&& c : cells) { c = Cell::buffer(c, 5e-9); }`
+  // loop followed the difference below, intended to clean up the 1e-8
+  // slivers left by the line-buffer split. That loop was a silent
+  // no-op for OGRMultiPolygon until T-015 restored the iterator
+  // write-back in Geometries_impl.hpp; once the write-back started
+  // working, the positive 5e-9 buffer merged legitimately-split
+  // sub-cells and broke fields2cover_types_cells.splitByLine. Dropped
+  // the loop — downstream decomposition already filters slivers by
+  // area, so the 1e-8-width OGR artefacts are harmless.
+  return this->difference(this->buffer(line, 1e-8));
 }
 
 Cells Cells::splitByLine(const MultiLineString& lines) const {

@@ -1,0 +1,120 @@
+# Copyright (C) 2026 Wageningen University — BSD-3-Clause
+#
+# CI gate for the Go API ↔ f2c-grpc-server end-to-end integration
+# suite (Phase 12 Plan 12-03 + 12-04).
+#
+# This workflow builds the C++ shim (libFields2Cover.so + f2c-grpc-server)
+# from source via cmake, then runs the Go integration suite with the
+# `integration` build tag. Only integration-tagged files are compiled
+# for `go test` here — the fast mock-only suite lives in api-go.yml.
+#
+# Required-check name (for branch protection): 'api-go-integration / e2e'
+
+name: api-go-integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api-go/**'
+      - 'f2c-grpc/**'
+      - 'proto/**'
+      - 'src/**'
+      - 'include/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/api-go-integration.yml'
+  pull_request:
+    paths:
+      - 'api-go/**'
+      - 'f2c-grpc/**'
+      - 'proto/**'
+      - 'src/**'
+      - 'include/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/api-go-integration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+          cache-dependency-path: api-go/go.sum
+
+      - name: Install C++ build dependencies
+        # These are the runtime + build deps f2c needs per the repo root
+        # CMakeLists.txt. Keep in sync with the Docker base image
+        # installed in Phase 13.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            pkg-config \
+            libgdal-dev \
+            libeigen3-dev \
+            libtinyxml2-dev \
+            libgeos-dev \
+            nlohmann-json3-dev \
+            protobuf-compiler \
+            protobuf-compiler-grpc \
+            libgrpc++-dev \
+            libprotobuf-dev
+
+      - name: Configure CMake (with f2c-grpc shim)
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_F2C_GRPC=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_DOC=OFF \
+            -DBUILD_PYTHON=OFF \
+            -DBUILD_TUTORIALS=OFF
+
+      - name: Build libFields2Cover + f2c-grpc-server
+        run: cmake --build build --parallel --target f2c-grpc-server
+
+      - name: Verify shim binary exists
+        run: |
+          test -x build/f2c-grpc/f2c-grpc-server
+          file build/f2c-grpc/f2c-grpc-server
+          ldd build/f2c-grpc/f2c-grpc-server | grep -i fields2cover || true
+
+      - name: Pipeline contract check (SHC-03)
+        working-directory: api-go
+        run: bash scripts/check-pipeline-contract.sh
+
+      - name: Go module download
+        working-directory: api-go
+        run: go mod download
+
+      - name: Run integration suite
+        working-directory: api-go
+        env:
+          # Let the fixture skip the cmake-on-demand fallback — the
+          # binary is already built in the step above.
+          F2C_GRPC_SERVER: ${{ github.workspace }}/build/f2c-grpc/f2c-grpc-server
+          # libFields2Cover.so lives in the same build tree; make the
+          # dynamic linker find it without needing `make install`.
+          LD_LIBRARY_PATH: ${{ github.workspace }}/build:${{ github.workspace }}/build/f2c-grpc
+        run: |
+          go test -tags=integration -count=1 -timeout 600s -v ./test/integration/...
+
+      - name: Show shim logs on failure
+        if: failure()
+        run: |
+          echo "--- build/f2c-grpc output ---"
+          ls -la build/f2c-grpc/ || true
+          echo "--- recent dmesg (in case of OOM) ---"
+          sudo dmesg --ctime | tail -n 50 || true

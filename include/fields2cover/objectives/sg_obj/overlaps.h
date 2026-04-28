@@ -8,8 +8,6 @@
 #ifndef FIELDS2COVER_OBJECTIVES_OVERLAPS_H_
 #define FIELDS2COVER_OBJECTIVES_OVERLAPS_H_
 
-#include <utility>
-#include <vector>
 #include "fields2cover/types.h"
 #include "fields2cover/objectives/sg_obj/sg_objective.h"
 

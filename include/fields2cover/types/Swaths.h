@@ -24,6 +24,11 @@ struct Swaths {
   explicit Swaths(const std::vector<Swath>& s);
   ~Swaths();
 
+  Swaths(const Swaths&) = default;
+  Swaths(Swaths&&) noexcept = default;
+  Swaths& operator=(const Swaths&) = default;
+  Swaths& operator=(Swaths&&) noexcept = default;
+
   void emplace_back(const Swath& s);
 
   void emplace_back(const LineString& l, double w, int id = 0,

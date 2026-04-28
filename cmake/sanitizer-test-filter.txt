@@ -1,0 +1,13 @@
+# GTEST_FILTER string for ENABLE_SANITIZERS=ON ctest runs.
+#
+# All previously-filtered T-015 failures were RESOLVED in commits f824a45 and
+# fe60a3a (phase 7). Root cause was a dormant bug in
+# Geometries<>::Iterator::update() exposed by Phase 7 T-002's deep-copy fix.
+# See the merge commit (39336d0) for full analysis.
+#
+# Keeping this file as a placeholder so the sanitizer workflow that references
+# it doesn't break; filter is empty = no tests excluded.
+#
+# Usage:
+#   export GTEST_FILTER=$(grep -v '^#' cmake/sanitizer-test-filter.txt | tr -d '\n')
+#   ctest --test-dir build-asan --output-on-failure

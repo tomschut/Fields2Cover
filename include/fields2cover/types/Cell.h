@@ -10,7 +10,6 @@
 
 #include <gdal/ogr_geometry.h>
 #include <string>
-#include <boost/math/constants/constants.hpp>
 #include "fields2cover/types/Geometries.h"
 #include "fields2cover/types/Point.h"
 #include "fields2cover/types/LinearRing.h"

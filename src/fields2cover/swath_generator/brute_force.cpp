@@ -9,8 +9,6 @@
 #include <execution>
 #endif
 #include <vector>
-#include <utility>
-#include <limits>
 #include "fields2cover/swath_generator/brute_force.h"
 
 namespace f2c::sg {
@@ -25,8 +23,15 @@ void BruteForce::setStepAngle(double d) {
 
 double BruteForce::computeBestAngle(f2c::obj::SGObjective& obj,
     double op_width, const F2CCell& poly) {
+  // Angles `a` and `a + π` produce the *same* set of parallel swath lines
+  // (just traversed in opposite direction). Every SGObjective in the library
+  // depends only on the geometric set of swaths through `poly`, not on the
+  // direction of travel — so candidate angles in [π, 2π) are guaranteed to
+  // tie with their counterparts in [0, π) and we can skip them outright.
+  // This halves the number of computeCostOfAngle calls (the per-angle
+  // cost dominates BM_SwathGen at large n_cells).
   int n = static_cast<int>(
-      boost::math::constants::two_pi<double>() / step_angle);
+      boost::math::constants::pi<double>() / step_angle);
   std::vector<double> costs(n);
   std::vector<int> ids(n);
   std::iota(ids.begin(), ids.end(), 0);

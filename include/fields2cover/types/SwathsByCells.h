@@ -21,6 +21,11 @@ struct SwathsByCells {
   explicit SwathsByCells(const std::vector<Swaths>& s);
   ~SwathsByCells();
 
+  SwathsByCells(const SwathsByCells&) = default;
+  SwathsByCells(SwathsByCells&&) noexcept = default;
+  SwathsByCells& operator=(const SwathsByCells&) = default;
+  SwathsByCells& operator=(SwathsByCells&&) noexcept = default;
+
   void emplace_back(const Swaths& s);
   void push_back(const Swaths& s);
 

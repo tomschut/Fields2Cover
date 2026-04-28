@@ -1,0 +1,4 @@
+benchmark,input,median_ms,stddev_ms
+BM_Headland,10,0.007,0.049
+BM_Headland,100,0.005,0.000
+BM_Headland,1000,0.005,0.000

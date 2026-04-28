@@ -183,7 +183,19 @@ namespace std {
 template<>
 struct hash<f2c::types::Point> {
   inline size_t operator()(const f2c::types::Point& p) const {
-    return size_t(p.getX() + p.getY() * 1e10 + p.getZ() * 1e20);
+    // Combine per-coordinate std::hash<double> values. Previously this
+    // cast a potentially negative double directly to size_t, which is
+    // undefined behavior (flagged by UBSan on values like -1e10). Using
+    // std::hash<double> on each component avoids the UB while keeping
+    // the hash stable for equal points.
+    const size_t hx = std::hash<double>{}(p.getX());
+    const size_t hy = std::hash<double>{}(p.getY());
+    const size_t hz = std::hash<double>{}(p.getZ());
+    // Boost-style hash combine.
+    size_t seed = hx;
+    seed ^= hy + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+    seed ^= hz + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+    return seed;
   }
 };
 }

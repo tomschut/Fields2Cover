@@ -24,7 +24,7 @@ class FieldCoverage : public SGObjective {
   double computeCost(const F2CCells& poly, const F2CSwaths& swaths) override;
 
  public:
-  bool isMinimizing(void) const override;
+  bool isMinimizing() const override;
 };
 
 }  // namespace f2c::obj

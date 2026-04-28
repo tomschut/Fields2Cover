@@ -4,7 +4,6 @@
 //                        BSD-3 License
 //=============================================================================
 
-#include <numeric>
 #include "fields2cover/types/Graph2D.h"
 
 namespace f2c::types {
@@ -40,7 +39,7 @@ Graph2D& Graph2D::addDirectedEdge(
 
 Graph2D& Graph2D::addEdge(
     const Point& i, const Point& j, Graph2D& short_path_g) {
-  return addDirectedEdge(i, j, short_path_g.shortestPathCost(i, j));
+  addDirectedEdge(i, j, short_path_g.shortestPathCost(i, j));
   return addDirectedEdge(j, i, short_path_g.shortestPathCost(j, i));
 }
 

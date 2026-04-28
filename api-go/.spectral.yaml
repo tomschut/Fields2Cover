@@ -1,0 +1,10 @@
+extends:
+  - spectral:oas
+rules:
+  operation-description: error
+  operation-operationId: error
+  operation-tag-defined: error
+  oas3-valid-media-example: error
+  oas3-schema: error
+  info-description: error
+  tag-description: off

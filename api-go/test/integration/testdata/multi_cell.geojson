@@ -1,0 +1,33 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"name": "cell-a"},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [5.6600, 51.9700],
+          [5.6630, 51.9700],
+          [5.6630, 51.9720],
+          [5.6600, 51.9720],
+          [5.6600, 51.9700]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"name": "cell-b"},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [5.6650, 51.9700],
+          [5.6680, 51.9700],
+          [5.6680, 51.9720],
+          [5.6650, 51.9720],
+          [5.6650, 51.9700]
+        ]]
+      }
+    }
+  ]
+}

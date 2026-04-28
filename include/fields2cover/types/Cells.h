@@ -9,7 +9,6 @@
 #define FIELDS2COVER_TYPES_CELLS_H_
 
 #include <gdal/ogr_geometry.h>
-#include <vector>
 #include "fields2cover/types/Geometry.h"
 #include "fields2cover/types/Geometries.h"
 #include "fields2cover/types/Point.h"

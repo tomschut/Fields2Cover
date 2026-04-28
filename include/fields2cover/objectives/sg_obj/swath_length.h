@@ -8,7 +8,6 @@
 #ifndef FIELDS2COVER_OBJECTIVES_SWATH_LENGTH_H_
 #define FIELDS2COVER_OBJECTIVES_SWATH_LENGTH_H_
 
-#include <numeric>
 #include "fields2cover/types.h"
 #include "fields2cover/objectives/sg_obj/sg_objective.h"
 

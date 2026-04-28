@@ -12,7 +12,8 @@ namespace f2c::pp {
 
 F2CPath DubinsCurves::createSimpleTurn(const F2CRobot& robot,
     double dist_start_pos, double start_angle, double end_angle) {
-  steer::State start, end;
+  steer::State start{};
+  steer::State end{};
 
   start.x = 0.0;
   start.y = 0.0;

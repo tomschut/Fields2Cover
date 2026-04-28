@@ -8,7 +8,6 @@
 #ifndef FIELDS2COVER_SWATH_GENERATOR_SWATH_GENERATOR_BASE_H_
 #define FIELDS2COVER_SWATH_GENERATOR_SWATH_GENERATOR_BASE_H_
 
-#include <vector>
 #include "fields2cover/types.h"
 #include "fields2cover/objectives/sg_obj/sg_objective.h"
 

@@ -1,0 +1,14 @@
+# api-go/oapi-codegen.yaml
+# Configuration for oapi-codegen v2. Consumed by internal/api/gen.go.
+package: api
+output: api.gen.go
+generate:
+  models: true
+  chi-server: true
+  strict-server: false
+  embedded-spec: true
+output-options:
+  skip-prune: false
+  user-templates: {}
+compatibility:
+  always-prefix-enum-values: false

@@ -1,0 +1,4 @@
+benchmark,input,median_ms,stddev_ms,n_swaths
+BM_SwathGen,10,20.364,0.398,6
+BM_SwathGen,100,577.976,4.285,96
+BM_SwathGen,1000,31243.911,7.438,996

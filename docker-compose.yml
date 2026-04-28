@@ -1,0 +1,46 @@
+# Fields2Cover v2 — single-service compose for local dev.
+#
+#   docker compose up -d
+#   curl http://localhost:8080/healthz
+#   curl http://localhost:8080/docs
+#
+# The image bundles the Go API and the C++ shim under one bash supervisor;
+# there is no separate sidecar service. If you want hot-reload of the
+# OpenAPI spec, mount it over the baked-in copy:
+#
+#   volumes:
+#     - ./api-go/openapi.yaml:/etc/f2c/openapi.yaml:ro
+
+services:
+  f2c:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: f2c:v2
+    container_name: f2c
+    hostname: f2c
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - f2c-shared
+    environment:
+      API_LOG_FORMAT: json
+      API_LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+# Cross-project shared network. Declared with a fixed `name:` so docker
+# compose does NOT prefix it with the project name (the default is
+# `<project>_<network>`, which would make it invisible to other compose
+# files). wodan and farmmaps both declare this same network with
+# `external: true` so their containers can resolve `f2c` by hostname
+# without spinning up a second copy.
+networks:
+  f2c-shared:
+    name: f2c-shared
+    driver: bridge

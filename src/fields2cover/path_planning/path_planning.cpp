@@ -48,8 +48,10 @@ F2CPath PathPlanning::planPathForConnection(const F2CRobot& robot,
     const F2CMultiPoint& mp,
     const F2CSwaths& s2,
     TurningBase& turn) {
-  F2CPoint p1, p2;
-  double ang1, ang2;
+  F2CPoint p1;
+  F2CPoint p2;
+  double ang1 = 0.0;
+  double ang2 = 0.0;
 
   if (s1.size() > 0) {
     p1 = s1.back().endPoint();
@@ -92,7 +94,10 @@ F2CPath PathPlanning::planPathForConnection(const F2CRobot& robot,
 
 
 double PathPlanning::getSmoothTurningRadius(const F2CRobot& robot) {
-  double x, y, ang, k;
+  double x = 0.0;
+  double y = 0.0;
+  double ang = 0.0;
+  double k = 0.0;
   end_of_clothoid(0.0, 0.0, 0.0, 0.0, robot.getMaxDiffCurv(), 1.0,
       robot.getMaxCurv() / robot.getMaxDiffCurv(),
       &x, &y, &ang, &k);

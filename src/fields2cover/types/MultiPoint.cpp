@@ -36,7 +36,10 @@ void MultiPoint::getGeometry(size_t i, Point& point) {
     throw std::out_of_range(
         "MultiPoint does not contain point " + std::to_string(i));
   }
-  point = Point(data_->getGeometryRef(i), EmptyDestructor());
+  // T-002: deep-copy via cloning ctor so `point` owns its data. Previously
+  // an EmptyDestructor view dangled if the parent MultiPoint was destroyed
+  // before the out-parameter.
+  point = Point(data_->getGeometryRef(i));
 }
 
 void MultiPoint::getGeometry(size_t i, Point& point) const {
@@ -44,7 +47,8 @@ void MultiPoint::getGeometry(size_t i, Point& point) const {
     throw std::out_of_range(
         "MultiPoint does not contain point " + std::to_string(i));
   }
-  point = Point(data_->getGeometryRef(i), EmptyDestructor());
+  // T-002: see non-const overload above.
+  point = Point(data_->getGeometryRef(i));
 }
 
 Point MultiPoint::getGeometry(size_t i) {

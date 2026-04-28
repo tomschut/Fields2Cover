@@ -9,8 +9,8 @@
 namespace f2c::rp {
 
 void SnakeOrder::sortSwaths(F2CSwaths& swaths) const {
-  size_t i;
-  for (i = 1; i < (swaths.size() - 1) / 2 + 1; ++i) {
+  size_t i = 1;
+  for (; i < (swaths.size() - 1) / 2 + 1; ++i) {
     std::rotate(swaths.begin() + i, swaths.begin() + i + 1, swaths.end());
   }
   std::reverse(swaths.begin() + i + 1, swaths.end());

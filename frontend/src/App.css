@@ -1,0 +1,583 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1a1a1a;
+  background: #f8f9fa;
+}
+
+/* Header */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  border-top: 3px solid #166534;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+nav a {
+  font-size: 0.9rem;
+  color: #374151;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav a:hover {
+  color: #166534;
+}
+
+/* Hero */
+.hero {
+  max-width: 1100px;
+  margin: 5rem auto 3rem;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #6b7280;
+  max-width: 540px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+.cta {
+  display: inline-block;
+  background: #166534;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.15s;
+}
+
+.cta:hover {
+  background: #14532d;
+}
+
+/* Cards */
+.cards {
+  max-width: 1100px;
+  margin: 0 auto 5rem;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.75rem;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  color: #111827;
+}
+
+.card p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  display: inline-block;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+}
+
+/* === Phase 18: Map Shell === */
+
+.map-shell {
+  display: flex;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 360px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.map-panel {
+  flex: 1;
+  position: relative;
+  height: 100%;
+}
+
+.map-panel .leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+.input-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.input-tab {
+  flex: 1;
+  height: 44px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.input-tab--active {
+  border-bottom-color: #166534;
+  color: #166534;
+  font-weight: 600;
+}
+
+.drop-zone {
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.drop-zone--active {
+  border-color: #166534;
+  background: #f0fdf4;
+}
+
+.paste-textarea {
+  width: 100%;
+  height: 160px;
+  font-family: monospace;
+  font-size: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  resize: vertical;
+}
+
+.paste-textarea--error {
+  border-color: #dc2626;
+}
+
+.error-text {
+  font-size: 0.8125rem;
+  color: #dc2626;
+  margin-top: 8px;
+}
+
+.field-status {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.tile-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 4px 8px;
+  display: flex;
+  gap: 4px;
+  font-size: 0.8125rem;
+}
+
+.tile-toggle__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #374151;
+  font-family: inherit;
+}
+
+.tile-toggle__btn--active {
+  background: #f0fdf4;
+  color: #166534;
+  font-weight: 600;
+}
+
+.load-field-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  height: 44px;
+  background: #166534;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.load-field-btn:hover {
+  background: #14532d;
+}
+
+/* Mobile layout — stack sidebar above map */
+@media (max-width: 768px) {
+  .map-shell {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 56px);
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .map-panel {
+    height: 50vh;
+    min-height: 280px;
+    flex: none;
+  }
+}
+
+/* === Phase 19: Pipeline Integration === */
+
+.param-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.section-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  border-left: 3px solid #166534;
+  padding-left: 8px;
+  margin-bottom: 8px;
+}
+
+.param-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.param-input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.param-input--error {
+  border-color: #dc2626;
+}
+
+.param-select {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  appearance: auto;
+}
+
+.param-error {
+  font-size: 0.8125rem;
+  color: #dc2626;
+  margin-top: 4px;
+}
+
+.run-btn {
+  display: block;
+  width: 100%;
+  height: 44px;
+  background: #166534;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  margin-top: 8px;
+}
+
+.run-btn:hover:not(:disabled) {
+  background: #14532d;
+}
+
+.run-btn:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+}
+
+.pipeline-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.875rem;
+  color: #dc2626;
+  margin-top: 8px;
+}
+
+.layer-toggles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.layer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.layer-toggle__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.result-stats {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+/* Sidebar scrolls when content overflows (Phase 19 adds significant content) */
+.sidebar {
+  overflow-y: auto;
+}
+
+/* === Phase 20: Docs Pages === */
+
+.docs-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+.docs-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.docs-lead {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.docs-section-heading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  border-left: 3px solid #166534;
+  padding-left: 8px;
+  margin: 32px 0 16px;
+}
+
+.docs-prose {
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.code-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  margin-top: 16px;
+}
+
+.code-tab {
+  height: 44px;
+  padding: 0 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.code-tab:hover {
+  color: #374151;
+}
+
+.code-tab--active {
+  border-bottom-color: #166534;
+  color: #166534;
+  font-weight: 700;
+}
+
+.code-block {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+  margin-bottom: 32px;
+}
+
+.docs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin-bottom: 32px;
+}
+
+.docs-table th {
+  text-align: left;
+  padding: 8px 16px;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.docs-table td {
+  padding: 8px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  vertical-align: top;
+}
+
+.docs-table code {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.875rem;
+  font-family: monospace;
+}
+
+.swagger-page {
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+
+.nav-link--active {
+  color: #166534 !important;
+  font-weight: 700;
+}
+
+/* ── Phase 22: Start-point selection ─────────────────────────────── */
+.start-point-toggle {
+  position: absolute;
+  top: 10px;
+  /* right value must leave room for .tile-toggle (right: 10px, ~110px wide).
+     If .tile-toggle gains more buttons or its width changes, update this value too. */
+  right: 120px;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 4px 8px;
+  display: flex;
+  gap: 4px;
+  font-size: 0.8125rem;
+}
