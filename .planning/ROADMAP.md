@@ -41,10 +41,10 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 ### v4.0 Multi-Robot Planning
 
 - [ ] **Phase 24: C++ Multi-Robot Partitioning** — New f2c algorithm divides a field into N zones weighted by robot work rate
-- [ ] **Phase 25: C++ Grain Cart Coordination** — New f2c algorithm computes cart travel path and headland rendezvous points alongside a robot route
+- [ ] **Phase 25: C++ Follower Coordination** — New f2c algorithm computes cart travel path and headland rendezvous points alongside a robot route
 - [ ] **Phase 26: gRPC RPCs + Go API Endpoints** — Wire both new algorithms through proto → Go API as two new REST endpoints
 - [ ] **Phase 27: Multi-Robot Frontend** — Fleet configuration panel + multi-path map overlay in the React UI
-- [ ] **Phase 28: Grain Cart Frontend** — Cart configuration panel + cart path and rendezvous overlays in the React UI
+- [ ] **Phase 28: Follower Frontend** — Cart configuration panel + follower path and rendezvous overlays in the React UI
 
 ## Phase Details
 
@@ -59,12 +59,12 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
   4. The new partitioning function has its own unit test covering at least a 2-robot and a 3-robot case
 **Plans**: TBD
 
-### Phase 25: C++ Grain Cart Coordination
-**Goal**: The f2c library can compute a grain cart's travel path and headland rendezvous points from a robot route and cart specs
+### Phase 25: C++ Follower Coordination
+**Goal**: The f2c library can compute a follower's travel path and headland rendezvous points from a robot route and follower specs
 **Depends on**: Phase 24 (shares C++ library build context; establishes patterns for new algorithm additions)
 **Requirements**: F2C-02
 **Success Criteria** (what must be TRUE):
-  1. A call to the new cart coordination function with a robot coverage route and cart specs (tank capacity, unload time, travel speed) returns a cart path geometry and a list of rendezvous point coordinates
+  1. A call to the new cart coordination function with a robot coverage route and follower specs (tank capacity, unload time, travel speed) returns a follower path geometry and a list of rendezvous point coordinates
   2. The number of rendezvous points is consistent with the robot's route length and the cart's tank capacity (more rendezvous when capacity is smaller)
   3. All existing GoogleTest unit tests continue to pass after the algorithm is added
   4. The new coordination function has its own unit test covering at least one rendezvous-triggering scenario and one no-rendezvous (large capacity) scenario
@@ -76,7 +76,7 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 **Requirements**: API-01, API-02, API-03, API-04
 **Success Criteria** (what must be TRUE):
   1. `POST /pipeline/plan-multi-robot` accepts a valid request (field geometry + N robot specs) and returns N zone geometries plus N coverage plans with HTTP 200
-  2. `POST /pipeline/plan-cart` accepts a valid request (robot path + cart specs) and returns a cart path geometry plus a rendezvous point list with HTTP 200
+  2. `POST /pipeline/plan-follower` accepts a valid request (robot path + follower specs) and returns a follower path geometry plus a rendezvous point list with HTTP 200
   3. Both endpoints are declared in `api-go/openapi.yaml` with typed request and response schemas; `npm run generate` in `frontend/` produces updated TypeScript types without errors
   4. Integration tests covering both happy-path calls pass in CI (`docker compose build && docker compose up -d`)
 **Plans**: TBD
@@ -94,15 +94,15 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 28: Grain Cart Frontend
-**Goal**: Users can configure a grain cart and see the cart's computed travel path and rendezvous markers as toggleable overlays on the map
+### Phase 28: Follower Frontend
+**Goal**: Users can configure a follower and see the follower's computed travel path and rendezvous markers as toggleable overlays on the map
 **Depends on**: Phase 27 (cart planning is presented alongside multi-robot results; shares UI patterns established in Phase 27)
-**Requirements**: GC-01, GC-02, GC-03, GC-04
+**Requirements**: FOL-01, FOL-02, FOL-03, FOL-04
 **Success Criteria** (what must be TRUE):
-  1. User can enter grain cart configuration (tank capacity in kg, unload time in seconds, cart travel speed in m/s) in a dedicated panel
+  1. User can enter follower configuration (tank capacity in kg, unload time in seconds, follower travel speed in m/s) in a dedicated panel
   2. After a plan run that includes the cart, the cart's full travel path appears on the map as a distinct overlay with its own color
   3. Each headland rendezvous/unload point is marked on the map (e.g., a circle or pin marker at the computed coordinate)
-  4. The cart path overlay and the rendezvous markers layer are each independently toggleable without affecting any robot path layers
+  4. The follower path overlay and the rendezvous markers layer are each independently toggleable without affecting any robot path layers
 **Plans**: TBD
 **UI hint**: yes
 
@@ -120,7 +120,7 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 | 22. Start/End Point Selection | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 23. Start-Point Native Backend | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 24. C++ Multi-Robot Partitioning | v4.0 | 0/? | Not started | - |
-| 25. C++ Grain Cart Coordination | v4.0 | 0/? | Not started | - |
+| 25. C++ Follower Coordination | v4.0 | 0/? | Not started | - |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
-| 28. Grain Cart Frontend | v4.0 | 0/? | Not started | - |
+| 28. Follower Frontend | v4.0 | 0/? | Not started | - |

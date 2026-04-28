@@ -2,17 +2,17 @@
 
 ## What This Is
 
-Fields2Cover is a C++17 coverage path planning library for agricultural robots. The project has shipped three milestones: v1.0 hardened the Python/connexion API; v2.0 rewrote the API layer in Go with a journey-first surface (Go↔f2c via gRPC shim, clients in wodan and farmmaps, Python API retired); v3.0 ships a React front-end — an interactive demo served from the Go container with Leaflet map, PDOK parcel import, full pipeline UI, and start-point selection. **v4.0 extends f2c with multi-robot field division and grain cart coordination**, wired through gRPC → Go API → React UI.
+Fields2Cover is a C++17 coverage path planning library for agricultural robots. The project has shipped three milestones: v1.0 hardened the Python/connexion API; v2.0 rewrote the API layer in Go with a journey-first surface (Go↔f2c via gRPC shim, clients in wodan and farmmaps, Python API retired); v3.0 ships a React front-end — an interactive demo served from the Go container with Leaflet map, PDOK parcel import, full pipeline UI, and start-point selection. **v4.0 extends f2c with multi-robot field division and follower coordination**, wired through gRPC → Go API → React UI.
 
 ## Current Milestone: v4.0 Multi-Robot Planning
 
-**Goal:** Extend the fields2cover library with multi-robot field partitioning and grain cart path coordination, expose both through new gRPC RPCs and Go API endpoints, and add fleet configuration + multi-path visualization to the React frontend.
+**Goal:** Extend the fields2cover library with multi-robot field partitioning and follower path coordination, expose both through new gRPC RPCs and Go API endpoints, and add fleet configuration + multi-path visualization to the React frontend.
 
 **Target features:**
 - **Multi-robot division** — N robots with heterogeneous specs; field partitioned by work rate (width × speed); each robot gets a full independent coverage plan; all paths shown in distinct colors
-- **Grain cart planning** — configure a trailing grain cart (capacity, unload time, speed); system computes cart path alongside primary robot route, marks headland rendezvous points; both visualized as toggleable overlays
-- **New C++ in f2c** — multi-robot partitioning algorithm + grain cart coordination algorithm
-- **New gRPC RPCs** + Go API endpoints (`/pipeline/plan-multi-robot`, `/pipeline/plan-cart`) + frontend robot fleet and cart panels
+- **Follower planning** — configure a trailing follower (capacity, unload time, speed); system computes follower path alongside primary robot route, marks headland rendezvous points; both visualized as toggleable overlays
+- **New C++ in f2c** — multi-robot partitioning algorithm + follower coordination algorithm
+- **New gRPC RPCs** + Go API endpoints (`/pipeline/plan-multi-robot`, `/pipeline/plan-follower`) + frontend robot fleet and follower panels
 
 ## Core Value
 

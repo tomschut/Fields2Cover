@@ -52,10 +52,10 @@ Phase 24 of 28 — PLANNING
 | Phase | Name | Status | Notes |
 |-------|------|--------|-------|
 | 24 | C++ Multi-Robot Partitioning | Not started | - |
-| 25 | C++ Grain Cart Coordination | Not started | - |
+| 25 | C++ Follower Coordination | Not started | - |
 | 26 | gRPC RPCs + Go API Endpoints | Not started | - |
 | 27 | Multi-Robot Frontend | Not started | - |
-| 28 | Grain Cart Frontend | Not started | - |
+| 28 | Follower Frontend | Not started | - |
 
 ## Phase Status (v3.0 — complete)
 
