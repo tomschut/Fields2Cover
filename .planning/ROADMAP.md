@@ -98,7 +98,9 @@ Plans:
   1. A call to `GraphRouteOptimizer::optimize()` with a set of swaths returns a reordered swath sequence whose total endpoint-to-endpoint travel distance is less than or equal to the naive sequential ordering
   2. The optimizer applies direction penalties (parallel connections score lower than crossing connections) so naturally parallel swaths are preferred as neighbors
   3. All existing GoogleTest unit tests continue to pass; the optimizer has its own unit test on a ≥4-swath field demonstrating improved ordering over sequential
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 25b-01-PLAN.md — Implement GraphRouteOptimizer (header + source + unit tests)
 
 ### Phase 25c: C++ Obstacle Avoider
 **Goal**: The f2c library can fragment swaths around polygon obstacles, producing trimmed swath segments that avoid inflated obstacle boundaries
@@ -164,6 +166,7 @@ Plans:
 | 24. C++ Multi-Robot Partitioning | v4.0 | 1/1 | Complete | 2026-04-29 |
 | 25. C++ Follower Coordination | v4.0 | 1/1 | Complete   | 2026-04-29 |
 | 25a. C++ Partition Strategies | v4.0 | 1/1 | Complete | 2026-04-29 |
+| 25b. C++ Graph Route Optimizer | v4.0 | 0/1 | Not started | - |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
 | 28. Follower Frontend | v4.0 | 0/? | Not started | - |
