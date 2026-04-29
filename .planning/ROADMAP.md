@@ -42,7 +42,10 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 
 - [x] **Phase 24: C++ Multi-Robot Partitioning** — New f2c algorithm divides a field into N zones weighted by robot work rate (completed 2026-04-29)
 - [ ] **Phase 25: C++ Follower Coordination** — New f2c algorithm computes cart travel path and headland rendezvous points alongside a robot route
-- [ ] **Phase 26: gRPC RPCs + Go API Endpoints** — Wire both new algorithms through proto → Go API as two new REST endpoints
+- [ ] **Phase 25a: C++ Partition Strategies** — SPATIAL_RTREE and LENGTH_BALANCED multi-robot division strategies (inspired by farmtrax Divy)
+- [ ] **Phase 25b: C++ Graph Route Optimizer** — Direction-aware Dijkstra swath ordering to minimise travel distance (inspired by farmtrax Nety)
+- [ ] **Phase 25c: C++ Obstacle Avoider** — Fragment swaths around inflated polygon obstacles (inspired by farmtrax ObstacleAvoider)
+- [ ] **Phase 26: gRPC RPCs + Go API Endpoints** — Wire all five new C++ algorithms through proto → Go API as REST endpoints
 - [ ] **Phase 27: Multi-Robot Frontend** — Fleet configuration panel + multi-path map overlay in the React UI
 - [ ] **Phase 28: Follower Frontend** — Cart configuration panel + follower path and rendezvous overlays in the React UI
 
@@ -74,15 +77,48 @@ Plans:
 Plans:
 - [ ] 25-01-PLAN.md — Implement FollowerCoordination class (header + source) and unit tests
 
-### Phase 26: gRPC RPCs + Go API Endpoints
-**Goal**: Both new algorithms are reachable via REST — proto definitions, C++ gRPC server stubs, Go client, and typed OpenAPI endpoints are all wired and tested
-**Depends on**: Phase 25 (both C++ algorithms must exist before they can be exposed via gRPC)
-**Requirements**: API-01, API-02, API-03, API-04
+### Phase 25a: C++ Partition Strategies
+**Goal**: The f2c library gains two additional multi-robot field division strategies beyond the existing strip-based partitioner — spatial proximity clustering (SPATIAL_RTREE) and workload-balanced assignment (LENGTH_BALANCED)
+**Depends on**: Phase 24 (extends MultiRobotPartition patterns)
+**Requirements**: F2C-03
 **Success Criteria** (what must be TRUE):
-  1. `POST /pipeline/plan-multi-robot` accepts a valid request (field geometry + N robot specs) and returns N zone geometries plus N coverage plans with HTTP 200
+  1. A call to `SpatialRtreePartition::partition()` returns N zones where each zone is a spatially contiguous cluster of swaths assigned to one robot (geographically compact, not scattered strips)
+  2. A call to `LengthBalancedPartition::partition()` returns N zones where total swath length per robot is balanced within 10% of each other across all robots
+  3. Both strategies accept the same `(F2CCells field, std::vector<F2CRobot> robots)` signature as the Phase 24 partitioner
+  4. All existing GoogleTest unit tests continue to pass; each new strategy has its own unit test covering a 2-robot and 3-robot case
+**Plans**: TBD
+
+### Phase 25b: C++ Graph Route Optimizer
+**Goal**: The f2c library gains a Nety-style graph-based swath traversal optimizer that minimizes total travel distance between swaths using direction-aware Dijkstra scoring
+**Depends on**: Phase 25 (builds on C++ library patterns)
+**Requirements**: F2C-04
+**Success Criteria** (what must be TRUE):
+  1. A call to `GraphRouteOptimizer::optimize()` with a set of swaths returns a reordered swath sequence whose total endpoint-to-endpoint travel distance is less than or equal to the naive sequential ordering
+  2. The optimizer applies direction penalties (parallel connections score lower than crossing connections) so naturally parallel swaths are preferred as neighbors
+  3. All existing GoogleTest unit tests continue to pass; the optimizer has its own unit test on a ≥4-swath field demonstrating improved ordering over sequential
+**Plans**: TBD
+
+### Phase 25c: C++ Obstacle Avoider
+**Goal**: The f2c library can fragment swaths around polygon obstacles, producing trimmed swath segments that avoid inflated obstacle boundaries
+**Depends on**: Phase 25 (builds on C++ library patterns)
+**Requirements**: F2C-05
+**Success Criteria** (what must be TRUE):
+  1. A call to `ObstacleAvoider::avoid()` with a list of swaths and a polygon obstacle returns swath segments with no overlap with the inflated obstacle polygon (inflation = safety margin parameter)
+  2. Swath segments shorter than a minimum threshold (0.1 m) are dropped rather than returned
+  3. All existing GoogleTest unit tests continue to pass; the avoider has its own unit test with a known obstacle placement that splits at least one swath into two segments
+**Plans**: TBD
+
+### Phase 26: gRPC RPCs + Go API Endpoints
+**Goal**: All five new C++ algorithms are reachable via REST — proto definitions, C++ gRPC server stubs, Go client, and typed OpenAPI endpoints are all wired and tested
+**Depends on**: Phase 25c (all C++ algorithms must exist before gRPC exposure)
+**Requirements**: API-01, API-02, API-03, API-04, API-05, API-06, API-07
+**Success Criteria** (what must be TRUE):
+  1. `POST /pipeline/plan-multi-robot` accepts a valid request (field geometry + N robot specs + optional partition strategy) and returns N zone geometries plus N coverage plans with HTTP 200
   2. `POST /pipeline/plan-follower` accepts a valid request (robot path + follower specs) and returns a follower path geometry plus a rendezvous point list with HTTP 200
-  3. Both endpoints are declared in `api-go/openapi.yaml` with typed request and response schemas; `npm run generate` in `frontend/` produces updated TypeScript types without errors
-  4. Integration tests covering both happy-path calls pass in CI (`docker compose build && docker compose up -d`)
+  3. `POST /pipeline/optimize-route` accepts swaths and returns an optimized swath ordering with HTTP 200
+  4. `POST /pipeline/avoid-obstacles` accepts swaths + obstacle polygons + safety margin and returns trimmed swath segments with HTTP 200
+  5. All endpoints are declared in `api-go/openapi.yaml` with typed schemas; `npm run generate` produces updated TypeScript types without errors
+  6. Integration tests covering all happy-path calls pass in CI (`docker compose build && docker compose up -d`)
 **Plans**: TBD
 
 ### Phase 27: Multi-Robot Frontend
