@@ -11,6 +11,9 @@ Requirements for the Multi-Robot Planning milestone. Phases continue from 23.
 
 - [x] **F2C-01**: f2c library exposes a multi-robot field partitioning algorithm that divides a field into N zones, where zone sizes are proportional to each robot's work rate (robot_width × robot_speed)
 - [x] **F2C-02**: f2c library exposes a follower coordination algorithm that, given a robot's coverage route and follower specs (tank capacity, unload time, travel speed), computes the cart's travel path and the headland rendezvous points where unloading occurs
+- [x] **F2C-03**: f2c library exposes SPATIAL_RTREE and LENGTH_BALANCED multi-robot partition strategies as alternatives to the strip-based partitioner
+- [x] **F2C-04**: f2c library exposes a graph-based swath traversal optimizer (GraphRouteOptimizer) that minimizes total travel distance using direction-aware Dijkstra scoring
+- [x] **F2C-05**: f2c library exposes an obstacle avoidance algorithm (ObstacleAvoider) that fragments swaths around inflated polygon obstacles, dropping segments shorter than 0.1 m
 
 ### Multi-Robot Coverage (MRD)
 
@@ -69,6 +72,9 @@ Requirements for the Multi-Robot Planning milestone. Phases continue from 23.
 |-------------|-------|--------|
 | F2C-01 | Phase 24 | Complete |
 | F2C-02 | Phase 25 | Complete |
+| F2C-03 | Phase 25a | Complete |
+| F2C-04 | Phase 25b | Pending |
+| F2C-05 | Phase 25c | Complete |
 | MRD-01 | Phase 27 | Pending |
 | MRD-02 | Phase 27 | Pending |
 | MRD-03 | Phase 27 | Pending |
