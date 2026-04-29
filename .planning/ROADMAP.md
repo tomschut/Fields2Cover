@@ -110,7 +110,9 @@ Plans:
   1. A call to `ObstacleAvoider::avoid()` with a list of swaths and a polygon obstacle returns swath segments with no overlap with the inflated obstacle polygon (inflation = safety margin parameter)
   2. Swath segments shorter than a minimum threshold (0.1 m) are dropped rather than returned
   3. All existing GoogleTest unit tests continue to pass; the avoider has its own unit test with a known obstacle placement that splits at least one swath into two segments
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 25c-01-PLAN.md — Implement ObstacleAvoider (header + source + unit tests)
 
 ### Phase 26: gRPC RPCs + Go API Endpoints
 **Goal**: All five new C++ algorithms are reachable via REST — proto definitions, C++ gRPC server stubs, Go client, and typed OpenAPI endpoints are all wired and tested
@@ -167,6 +169,7 @@ Plans:
 | 25. C++ Follower Coordination | v4.0 | 1/1 | Complete   | 2026-04-29 |
 | 25a. C++ Partition Strategies | v4.0 | 1/1 | Complete | 2026-04-29 |
 | 25b. C++ Graph Route Optimizer | v4.0 | 0/1 | Not started | - |
+| 25c. C++ Obstacle Avoider | v4.0 | 0/1 | Not started | - |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
 | 28. Follower Frontend | v4.0 | 0/? | Not started | - |
