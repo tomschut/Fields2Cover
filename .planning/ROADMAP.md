@@ -70,7 +70,9 @@ Plans:
   2. The number of rendezvous points is consistent with the robot's route length and the cart's tank capacity (more rendezvous when capacity is smaller)
   3. All existing GoogleTest unit tests continue to pass after the algorithm is added
   4. The new coordination function has its own unit test covering at least one rendezvous-triggering scenario and one no-rendezvous (large capacity) scenario
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 25-01-PLAN.md — Implement FollowerCoordination class (header + source) and unit tests
 
 ### Phase 26: gRPC RPCs + Go API Endpoints
 **Goal**: Both new algorithms are reachable via REST — proto definitions, C++ gRPC server stubs, Go client, and typed OpenAPI endpoints are all wired and tested
@@ -122,7 +124,7 @@ Plans:
 | 22. Start/End Point Selection | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 23. Start-Point Native Backend | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 24. C++ Multi-Robot Partitioning | v4.0 | 1/1 | Complete | 2026-04-29 |
-| 25. C++ Follower Coordination | v4.0 | 0/? | Not started | - |
+| 25. C++ Follower Coordination | v4.0 | 0/1 | Not started | - |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
 | 28. Follower Frontend | v4.0 | 0/? | Not started | - |
