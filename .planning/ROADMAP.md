@@ -121,7 +121,7 @@ Plans:
 | 21. PDOK Gewaspercelen Import | v3.0 | 1/1 | Complete | 2026-04-20 |
 | 22. Start/End Point Selection | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 23. Start-Point Native Backend | v3.0 | 2/2 | Complete | 2026-04-28 |
-| 24. C++ Multi-Robot Partitioning | v4.0 | 1/1 | Complete   | 2026-04-29 |
+| 24. C++ Multi-Robot Partitioning | v4.0 | 1/1 | Complete | 2026-04-29 |
 | 25. C++ Follower Coordination | v4.0 | 0/? | Not started | - |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
