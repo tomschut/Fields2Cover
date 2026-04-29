@@ -18,9 +18,11 @@ Fields2Cover is a C++17 coverage path planning library for agricultural robots. 
 
 Every API call either produces a directly-usable result or produces a typed handoff that the next call in the journey accepts without adaptation.
 
-## Current State (after v3.0)
+## Current State (after v4.0 Phase 24)
 
-**Shipped:** 2026-04-29
+**Phase 24 complete:** 2026-04-29 — `f2c::partition::MultiRobotPartition::partition()` implemented; strip-based weighted partitioning via GEOS intersection; 298/298 GoogleTest tests passing; F2C-01 satisfied. Phase 25 (Follower Coordination) is next.
+
+**Shipped v3.0:** 2026-04-29
 **Stack:** Go API (chi, oapi-codegen) + f2c gRPC shim (C++) + React 18 / Vite 8 / TypeScript frontend, served via go:embed
 **Frontend:** ~3,059 TS/TSX LOC across `frontend/src/`
 **Go API:** ~11,381 LOC in `api-go/`
@@ -108,4 +110,4 @@ Brownfield project. v1.0 stabilized the Python API; v2.0 replaced it with Go; v3
 - **PDOK:** CRS84 must be requested explicitly; rate-limit with AbortController on rapid pans
 
 ---
-*Last updated: 2026-04-29 after v3.0 milestone*
+*Last updated: 2026-04-29 after v4.0 Phase 24*
