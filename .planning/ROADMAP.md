@@ -40,7 +40,7 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 
 ### v4.0 Multi-Robot Planning
 
-- [ ] **Phase 24: C++ Multi-Robot Partitioning** — New f2c algorithm divides a field into N zones weighted by robot work rate
+- [x] **Phase 24: C++ Multi-Robot Partitioning** — New f2c algorithm divides a field into N zones weighted by robot work rate (completed 2026-04-29)
 - [ ] **Phase 25: C++ Follower Coordination** — New f2c algorithm computes cart travel path and headland rendezvous points alongside a robot route
 - [ ] **Phase 26: gRPC RPCs + Go API Endpoints** — Wire both new algorithms through proto → Go API as two new REST endpoints
 - [ ] **Phase 27: Multi-Robot Frontend** — Fleet configuration panel + multi-path map overlay in the React UI
@@ -59,7 +59,7 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
   4. The new partitioning function has its own unit test covering at least a 2-robot and a 3-robot case
 **Plans**: 1 plan
 Plans:
-- [ ] 24-01-PLAN.md — Implement MultiRobotPartition class (header + source) and unit tests
+- [x] 24-01-PLAN.md — Implement MultiRobotPartition class (header + source) and unit tests
 
 ### Phase 25: C++ Follower Coordination
 **Goal**: The f2c library can compute a follower's travel path and headland rendezvous points from a robot route and follower specs
@@ -121,7 +121,7 @@ Plans:
 | 21. PDOK Gewaspercelen Import | v3.0 | 1/1 | Complete | 2026-04-20 |
 | 22. Start/End Point Selection | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 23. Start-Point Native Backend | v3.0 | 2/2 | Complete | 2026-04-28 |
-| 24. C++ Multi-Robot Partitioning | v4.0 | 0/1 | Not started | - |
+| 24. C++ Multi-Robot Partitioning | v4.0 | 1/1 | Complete   | 2026-04-29 |
 | 25. C++ Follower Coordination | v4.0 | 0/? | Not started | - |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
