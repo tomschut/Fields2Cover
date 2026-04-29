@@ -41,7 +41,7 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 ### v4.0 Multi-Robot Planning
 
 - [x] **Phase 24: C++ Multi-Robot Partitioning** — New f2c algorithm divides a field into N zones weighted by robot work rate (completed 2026-04-29)
-- [ ] **Phase 25: C++ Follower Coordination** — New f2c algorithm computes cart travel path and headland rendezvous points alongside a robot route
+- [x] **Phase 25: C++ Follower Coordination** — New f2c algorithm computes cart travel path and headland rendezvous points alongside a robot route (completed 2026-04-29)
 - [ ] **Phase 25a: C++ Partition Strategies** — SPATIAL_RTREE and LENGTH_BALANCED multi-robot division strategies (inspired by farmtrax Divy)
 - [ ] **Phase 25b: C++ Graph Route Optimizer** — Direction-aware Dijkstra swath ordering to minimise travel distance (inspired by farmtrax Nety)
 - [ ] **Phase 25c: C++ Obstacle Avoider** — Fragment swaths around inflated polygon obstacles (inspired by farmtrax ObstacleAvoider)
@@ -75,7 +75,7 @@ Plans:
   4. The new coordination function has its own unit test covering at least one rendezvous-triggering scenario and one no-rendezvous (large capacity) scenario
 **Plans**: 1 plan
 Plans:
-- [ ] 25-01-PLAN.md — Implement FollowerCoordination class (header + source) and unit tests
+- [x] 25-01-PLAN.md — Implement FollowerCoordination class (header + source) and unit tests
 
 ### Phase 25a: C++ Partition Strategies
 **Goal**: The f2c library gains two additional multi-robot field division strategies beyond the existing strip-based partitioner — spatial proximity clustering (SPATIAL_RTREE) and workload-balanced assignment (LENGTH_BALANCED)
@@ -160,7 +160,7 @@ Plans:
 | 22. Start/End Point Selection | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 23. Start-Point Native Backend | v3.0 | 2/2 | Complete | 2026-04-28 |
 | 24. C++ Multi-Robot Partitioning | v4.0 | 1/1 | Complete | 2026-04-29 |
-| 25. C++ Follower Coordination | v4.0 | 0/1 | Not started | - |
+| 25. C++ Follower Coordination | v4.0 | 1/1 | Complete   | 2026-04-29 |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
 | 28. Follower Frontend | v4.0 | 0/? | Not started | - |

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Multi-Robot Planning
-status: ready_to_execute
-stopped_at: Completed 24-c-multi-robot-partitioning 24-01-PLAN.md
-last_updated: "2026-04-29T06:54:27.638Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 25-c-follower-coordination-01-PLAN.md
+last_updated: "2026-04-29T08:02:09.146Z"
 progress:
-  total_phases: 5
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_phases: 8
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
   percent: 100
 ---
 
@@ -35,17 +35,17 @@ Items acknowledged and deferred at milestone close on 2026-04-29:
 See: .planning/PROJECT.md (updated 2026-04-29 after v3.0 milestone)
 
 **Core value:** Every API call either produces a directly-usable result or produces a typed handoff that the next call in the journey accepts without adaptation.
-**Current focus:** v4.0 Multi-Robot Planning — Phase 24 (C++ Multi-Robot Partitioning)
+**Current focus:** v4.0 Multi-Robot Planning — Phase 25 (C++ Follower Coordination) COMPLETE
 
 ## Current Position
 
 Milestone: v4.0 Multi-Robot Planning
-Phase: 24 — COMPLETE (2026-04-29)
+Phase: 25 — COMPLETE (2026-04-29)
 Plan: 1 of 1 — COMPLETE
 
 ```
 [██████████] 100%
-Phase 24 of 28 — DONE
+Phase 25 of 28 — DONE
 ```
 
 ## Phase Status (v4.0)
@@ -53,7 +53,7 @@ Phase 24 of 28 — DONE
 | Phase | Name | Status | Notes |
 |-------|------|--------|-------|
 | 24 | C++ Multi-Robot Partitioning | Complete | 2026-04-29 — 298 tests green |
-| 25 | C++ Follower Coordination | Not started | - |
+| 25 | C++ Follower Coordination | Complete | 2026-04-29 — 305 tests green, F2C-02 satisfied |
 | 26 | gRPC RPCs + Go API Endpoints | Not started | - |
 | 27 | Multi-Robot Frontend | Not started | - |
 | 28 | Follower Frontend | Not started | - |
@@ -91,6 +91,8 @@ Phase 24 of 28 — DONE
 - **Frontend generated types:** Always run `npm run generate` in `frontend/` after OpenAPI changes — never hand-write API types
 - **MultiRobotPartition axis selection:** Cut along longer bounding-box axis (width>=height → vertical X strips, else horizontal Y strips) to minimise strip aspect ratio for typical rectangular fields
 - **f2c::partition namespace + module pattern:** New algorithms in include/fields2cover/{module}/ and src/fields2cover/{module}/; tests in tests/cpp/{module}/ — all auto-discovered by existing GLOB_RECURSE patterns after cmake re-run
+- **FollowerCoordination tank capacity units:** `tank_capacity_swath_m` is a pure swath-metres distance threshold — unit-consistent with F2CPath.len; Phase 26 converts kg via yield_per_metre at the gRPC layer before calling compute()
+- **FollowerCoordination rendezvous snap:** Uses `HL_SWATH .point` (start of headland segment); `i=j` advance inside scan-forward loop prevents off-by-one double-counting; no-HL_SWATH fallback uses last path point and breaks outer loop to prevent O(n^2)
 
 ## Key Architecture Decisions (v3.0)
 
@@ -129,10 +131,10 @@ Phase 24 of 28 — DONE
 
 ## Session Continuity
 
-Last session: 2026-04-29T06:54:27.635Z
-Stopped at: Completed 24-c-multi-robot-partitioning 24-01-PLAN.md
+Last session: 2026-04-29T08:02:09.143Z
+Stopped at: Completed 25-c-follower-coordination-01-PLAN.md
 Resume file: None
 
 ## Next Step
 
-Phase 24 complete. Next: `/gsd-plan-phase 25` to plan C++ Follower Coordination.
+Phase 25 complete. Next: `/gsd-plan-phase 26` to plan gRPC RPCs + Go API Endpoints.

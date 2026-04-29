@@ -10,7 +10,7 @@ Requirements for the Multi-Robot Planning milestone. Phases continue from 23.
 ### C++ Library Extensions
 
 - [x] **F2C-01**: f2c library exposes a multi-robot field partitioning algorithm that divides a field into N zones, where zone sizes are proportional to each robot's work rate (robot_width × robot_speed)
-- [ ] **F2C-02**: f2c library exposes a follower coordination algorithm that, given a robot's coverage route and follower specs (tank capacity, unload time, travel speed), computes the cart's travel path and the headland rendezvous points where unloading occurs
+- [x] **F2C-02**: f2c library exposes a follower coordination algorithm that, given a robot's coverage route and follower specs (tank capacity, unload time, travel speed), computes the cart's travel path and the headland rendezvous points where unloading occurs
 
 ### Multi-Robot Coverage (MRD)
 
@@ -68,7 +68,7 @@ Requirements for the Multi-Robot Planning milestone. Phases continue from 23.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | F2C-01 | Phase 24 | Complete |
-| F2C-02 | Phase 25 | Pending |
+| F2C-02 | Phase 25 | Complete |
 | MRD-01 | Phase 27 | Pending |
 | MRD-02 | Phase 27 | Pending |
 | MRD-03 | Phase 27 | Pending |
