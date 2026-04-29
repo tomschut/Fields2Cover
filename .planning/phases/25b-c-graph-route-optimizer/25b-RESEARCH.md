@@ -479,17 +479,17 @@ Step 2.6: All dependencies are already present in the project's Docker build env
 
 Security enforcement not applicable to a pure C++ algorithm library addition with no network, file I/O, or user input surface.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does `reverseDirOddSwaths` interfere with direction-flip decisions made inside `sortSwaths`?**
    - What we know: `genSortedSwaths` always calls `reverseDirOddSwaths()` after `sortSwaths`. This flips swaths at positions 1, 3, 5... to opposite direction.
    - What's unclear: If `sortSwaths` flips a swath (`.reverse()`) to minimize edge cost, the base class will un-flip it if it lands at an odd position.
-   - Recommendation: In `sortSwaths`, apply `.reverse()` only for swaths that land at even indices (0, 2, 4...) — OR simpler: use bidirectional cost only for SELECTION (which candidate to pick next), but do NOT actually call `.reverse()` inside `sortSwaths`. Let the base class handle all direction assignment via `reverseDirOddSwaths`. This is the safer approach that avoids interaction with the base class post-processing.
+   - RESOLVED: In `sortSwaths`, use bidirectional cost only for SELECTION (which candidate to pick next), but do NOT call `.reverse()` inside `sortSwaths`. Let the base class handle all direction assignment via `reverseDirOddSwaths`. This avoids any interaction with base class post-processing. The plan implements this approach.
 
 2. **What "improved ordering" looks like for the test assertion**
    - What we know: `DirectDistPathObj::computeCost(F2CSwaths&)` sums endpoint-to-endpoint headland distances.
    - What's unclear: For a ≥4-swath perfectly-parallel field, sequential boustrophedon IS already optimal. A non-trivial test requires a scattered (non-sequential) input.
-   - Recommendation: Shuffle the swaths before passing to `genSortedSwaths` (random engine like in boustrophedon_order_test), OR create a deliberately suboptimal sequential ordering (e.g., alternate y=1, y=4, y=2, y=3) and assert optimizer beats it.
+   - RESOLVED: Test uses a deliberately suboptimal ordering (swaths at y=1,4,2,3) and asserts `optimized_cost <= sequential_cost`. The plan uses `EXPECT_LE` (not `EXPECT_LT`) since after the base class internal sort the input may already be near-optimal for perfectly parallel rows.
 
 ## Sources
 
