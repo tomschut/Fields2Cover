@@ -44,7 +44,7 @@ Full archive: `.planning/milestones/v3.0-ROADMAP.md`
 - [x] **Phase 25: C++ Follower Coordination** — New f2c algorithm computes cart travel path and headland rendezvous points alongside a robot route (completed 2026-04-29)
 - [x] **Phase 25a: C++ Partition Strategies** — SPATIAL_RTREE and LENGTH_BALANCED multi-robot division strategies (inspired by farmtrax Divy) (completed 2026-04-29)
 - [ ] **Phase 25b: C++ Graph Route Optimizer** — Direction-aware Dijkstra swath ordering to minimise travel distance (inspired by farmtrax Nety)
-- [ ] **Phase 25c: C++ Obstacle Avoider** — Fragment swaths around inflated polygon obstacles (inspired by farmtrax ObstacleAvoider)
+- [x] **Phase 25c: C++ Obstacle Avoider** — Fragment swaths around inflated polygon obstacles (inspired by farmtrax ObstacleAvoider) (completed 2026-04-29)
 - [ ] **Phase 26: gRPC RPCs + Go API Endpoints** — Wire all five new C++ algorithms through proto → Go API as REST endpoints
 - [ ] **Phase 27: Multi-Robot Frontend** — Fleet configuration panel + multi-path map overlay in the React UI
 - [ ] **Phase 28: Follower Frontend** — Cart configuration panel + follower path and rendezvous overlays in the React UI
@@ -112,7 +112,7 @@ Plans:
   3. All existing GoogleTest unit tests continue to pass; the avoider has its own unit test with a known obstacle placement that splits at least one swath into two segments
 **Plans**: 1 plan
 Plans:
-- [ ] 25c-01-PLAN.md — Implement ObstacleAvoider (header + source + unit tests)
+- [x] 25c-01-PLAN.md — Implement ObstacleAvoider (header + source + unit tests)
 
 ### Phase 26: gRPC RPCs + Go API Endpoints
 **Goal**: All five new C++ algorithms are reachable via REST — proto definitions, C++ gRPC server stubs, Go client, and typed OpenAPI endpoints are all wired and tested
@@ -169,7 +169,7 @@ Plans:
 | 25. C++ Follower Coordination | v4.0 | 1/1 | Complete   | 2026-04-29 |
 | 25a. C++ Partition Strategies | v4.0 | 1/1 | Complete | 2026-04-29 |
 | 25b. C++ Graph Route Optimizer | v4.0 | 0/1 | Not started | - |
-| 25c. C++ Obstacle Avoider | v4.0 | 0/1 | Not started | - |
+| 25c. C++ Obstacle Avoider | v4.0 | 1/1 | Complete   | 2026-04-29 |
 | 26. gRPC RPCs + Go API Endpoints | v4.0 | 0/? | Not started | - |
 | 27. Multi-Robot Frontend | v4.0 | 0/? | Not started | - |
 | 28. Follower Frontend | v4.0 | 0/? | Not started | - |
