@@ -13,7 +13,7 @@
 # =============================================================================
 # Stage 1 — build the C++ library + gRPC shim
 # =============================================================================
-FROM ubuntu:22.04 AS build-cpp
+FROM ubuntu:24.04 AS build-cpp
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -111,21 +111,21 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/api ./cmd/api
 # =============================================================================
 # Stage 4 — runtime
 # =============================================================================
-FROM ubuntu:22.04 AS runtime
+FROM ubuntu:24.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Runtime shared-library deps for the C++ shim. Mirror libgdal30,
+# Runtime shared-library deps for the C++ shim. Mirror libgdal34t64,
 # libgeos, libtbb, libtinyxml2, libprotobuf, libgrpc++ — anything the
 # build-cpp stage linked against. No -dev packages, no compilers.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
-        libgdal30 \
-        libgeos-c1v5 \
+        libgdal34t64 \
+        libgeos-c1t64 \
         libtbb12 \
-        libtinyxml2-9 \
-        libprotobuf23 \
-        libgrpc++1 \
+        libtinyxml2-10 \
+        libprotobuf32t64 \
+        libgrpc++1.51t64 \
         libgomp1 \
         bash \
         curl \
