@@ -39,7 +39,7 @@ jobs:
       - name: Configure OR-Tools
         shell: bash
         run: |
-          wget https://github.com/google/or-tools/releases/download/v9.9/or-tools_amd64_ubuntu-22.04_cpp_v9.9.3963.tar.gz -q -O /tmp/ortools.tar.gz
+          wget https://github.com/google/or-tools/releases/download/v9.9/or-tools_amd64_ubuntu-24.04_cpp_v9.9.3963.tar.gz -q -O /tmp/ortools.tar.gz
           mkdir -p /tmp/ortools
           tar -zxf /tmp/ortools.tar.gz -C /tmp/ortools --strip-components=1
           sudo cp -r /tmp/ortools/bin/. /usr/bin
