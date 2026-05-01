@@ -104,9 +104,10 @@ func WKTPolygonRings(body string) [][][2]float64 {
 	return rings
 }
 
-// WKTMultiPolygonRings parses a MULTIPOLYGON WKT and returns all rings
-// from all polygon members. Returns nil on parse failure.
-func WKTMultiPolygonRings(wkt string) [][][2]float64 {
+// WKTMultiPolygonPolygons parses a MULTIPOLYGON WKT and returns each polygon
+// as a slice of rings (first ring = exterior, remaining = holes).
+// Returns nil on parse failure.
+func WKTMultiPolygonPolygons(wkt string) [][][][2]float64 {
 	s := strings.TrimSpace(wkt)
 	upper := strings.ToUpper(s)
 	for _, prefix := range []string{"MULTIPOLYGON ZM", "MULTIPOLYGON Z", "MULTIPOLYGON M", "MULTIPOLYGON"} {
@@ -122,7 +123,7 @@ func WKTMultiPolygonRings(wkt string) [][][2]float64 {
 	}
 
 	// Split into individual polygon elements "((ring,...),(ring,...))"
-	var allRings [][][2]float64
+	var polygons [][][][2]float64
 	depth := 0
 	start := 0
 	for i, c := range s {
@@ -137,9 +138,25 @@ func WKTMultiPolygonRings(wkt string) [][][2]float64 {
 			if depth == 0 {
 				elem := strings.TrimSpace(s[start : i+1])
 				rings := WKTPolygonRings(elem)
-				allRings = append(allRings, rings...)
+				if len(rings) > 0 {
+					polygons = append(polygons, rings)
+				}
 			}
 		}
+	}
+	return polygons
+}
+
+// WKTMultiPolygonRings parses a MULTIPOLYGON WKT and returns all rings
+// from all polygon members flattened into one slice. Returns nil on parse failure.
+//
+// Deprecated: use WKTMultiPolygonPolygons to preserve exterior/hole ring
+// grouping per polygon element.
+func WKTMultiPolygonRings(wkt string) [][][2]float64 {
+	polygons := WKTMultiPolygonPolygons(wkt)
+	var allRings [][][2]float64
+	for _, rings := range polygons {
+		allRings = append(allRings, rings...)
 	}
 	return allRings
 }

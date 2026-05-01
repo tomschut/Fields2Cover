@@ -276,21 +276,24 @@ func (p *projector) wktToGeoJSON(wkt string) api.GeoJSONFeatureCollection {
 
 	switch {
 	case strings.HasPrefix(upper, "MULTIPOLYGON"):
-		rings := WKTMultiPolygonRings(wkt)
-		if len(rings) == 0 {
+		polys := WKTMultiPolygonPolygons(wkt)
+		if len(polys) == 0 {
 			break
 		}
 		// Build MultiPolygon: [polygon][ring][point]
-		// Each ring from WKTMultiPolygonRings is a flat list of points.
-		// Wrap each ring as a single-ring polygon.
-		polygons := make([][][]interface{}, 0, len(rings))
-		for _, ring := range rings {
-			projRing := make([]interface{}, 0, len(ring))
-			for _, pt := range ring {
-				lng, lat := p.localToWGS84(pt[0], pt[1])
-				projRing = append(projRing, []interface{}{lng, lat})
+		// Preserve exterior + hole ring structure per polygon element.
+		polygons := make([][][]interface{}, 0, len(polys))
+		for _, rings := range polys {
+			projPoly := make([][]interface{}, 0, len(rings))
+			for _, ring := range rings {
+				projRing := make([]interface{}, 0, len(ring))
+				for _, pt := range ring {
+					lng, lat := p.localToWGS84(pt[0], pt[1])
+					projRing = append(projRing, []interface{}{lng, lat})
+				}
+				projPoly = append(projPoly, projRing)
 			}
-			polygons = append(polygons, [][]interface{}{projRing})
+			polygons = append(polygons, projPoly)
 		}
 		return makeFC("MultiPolygon", polygons)
 
